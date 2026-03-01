@@ -152,6 +152,11 @@ app.put('/api/borrows/:id/return', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Máy chủ đang chạy tại http://localhost:${PORT}`);
+});
+
+server.on('error', (err) => {
+  console.error('Lỗi khởi động máy chủ:', err.message);
+  process.exit(1);
 });
