@@ -244,3 +244,16 @@ INSERT IGNORE INTO categories(name, description) VALUES
 ('Science', 'Science books'),
 ('History', 'History books'),
 ('Novel', 'Novel books');
+
+-- =========================================
+-- ALTER TABLE (schema adjustments)
+-- =========================================
+
+-- users: thu hẹp username từ 100 -> 50 ký tự (đồng bộ entity)
+ALTER TABLE users
+    MODIFY COLUMN username VARCHAR(50) NOT NULL;
+
+-- users: đổi status VARCHAR sang is_active BOOLEAN (đồng bộ entity boolean isActive)
+ALTER TABLE users
+    DROP COLUMN status,
+    ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1;

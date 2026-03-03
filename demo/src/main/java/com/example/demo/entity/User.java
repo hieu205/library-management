@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import jakarta.validation.constraints.Size;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,8 +55,8 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @Column(length = 20)
-    private String status;
+    @Column(name = "is_active")
+    private boolean active;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
