@@ -1,6 +1,9 @@
 package com.example.demo.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.example.demo.entity.Book;
 
@@ -20,6 +23,8 @@ public class BookResponse {
     private String isbn;
     private Integer publishYear;
     private String language;
+    private List<AuthorResponse> authors;
+    private List<CategoryResponse> categories;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -27,6 +32,19 @@ public class BookResponse {
         if (book == null) {
             return null;
         }
+
+        List<AuthorResponse> authors = book.getBookAuthors() == null
+                ? Collections.emptyList()
+                : book.getBookAuthors().stream()
+                        .map(ba -> AuthorResponse.fromEntity(ba.getAuthor()))
+                        .collect(Collectors.toList());
+
+        List<CategoryResponse> categories = book.getBookCategories() == null
+                ? Collections.emptyList()
+                : book.getBookCategories().stream()
+                        .map(bc -> CategoryResponse.fromEntity(bc.getCategory()))
+                        .collect(Collectors.toList());
+
         return BookResponse.builder()
                 .id(book.getId())
                 .title(book.getTitle())
@@ -34,6 +52,8 @@ public class BookResponse {
                 .isbn(book.getIsbn())
                 .publishYear(book.getPublishYear())
                 .language(book.getLanguage())
+                .authors(authors)
+                .categories(categories)
                 .createdAt(book.getCreatedAt())
                 .updatedAt(book.getUpdatedAt())
                 .build();

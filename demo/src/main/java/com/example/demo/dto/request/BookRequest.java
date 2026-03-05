@@ -1,5 +1,7 @@
 package com.example.demo.dto.request;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -33,5 +35,11 @@ public class BookRequest {
 
     @Size(min = 2, max = 50, message = "Ngôn ngữ phải từ 2-50 ký tự")
     private String language;
+
+    // Danh sách id tác giả gán cho sách (optional khi tạo, có thể gán sau)
+    private List<Long> authorIds;
+
+    // Danh sách id thể loại gán cho sách (optional khi tạo, có thể gán sau)
+    private List<Long> categoryIds;
 
 }
