@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -151,6 +153,22 @@ public class BookService {
         }
 
         bookRepository.delete(book);
+    }
+
+    public List<BookResponse> getAllBook() {
+        List<Book> listBookResponse = bookRepository.findAll();
+
+        List<BookResponse> res = new ArrayList<>();
+        for (Book x : listBookResponse) {
+            res.add(BookResponse.fromEntity(x));
+        }
+        return res;
+    }
+
+    public BookResponse getBookById(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Khong tim thay book co id " + id));
+        return BookResponse.fromEntity(book);
     }
 
 }

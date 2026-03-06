@@ -1,0 +1,315 @@
+{
+  "info": {
+    "name": "Library Management API",
+    "_postman_id": "library-management-v1",
+    "description": "Toàn bộ API của hệ thống quản lý thư viện. Base URL: http://localhost:8080\n\nXác thực: HTTP Basic Auth (username + password)\n- Tài khoản test: admin / Password@123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@gmail.com\",\n  \"password\": \"Password@123\",\n  \"fullName\": \"Người Dùng Test\",\n  \"phone\": \"0909999999\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Đăng ký tài khoản mới. Không cần xác thực."
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Password@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Đăng nhập. Không cần xác thực."
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            },
+            "description": "Lấy thông tin profile của user đang đăng nhập. Cần Basic Auth."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@library.com\",\n  \"fullName\": \"Quản Trị Viên\",\n  \"phone\": \"0901111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Cập nhật profile của user đang đăng nhập (không đổi password). Cần Basic Auth."
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Lấy danh sách tất cả user (kể cả user bị khoá). Cần Basic Auth."
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser01\",\n  \"email\": \"newuser01@gmail.com\",\n  \"password\": \"Password@123\",\n  \"fullName\": \"User Mới\",\n  \"phone\": \"0908888888\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Tạo user mới (chỉ Admin). Cần Basic Auth."
+          }
+        },
+        {
+          "name": "Update User By ID (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "5"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user1\",\n  \"email\": \"user1_new@gmail.com\",\n  \"password\": \"NewPass@456\",\n  \"fullName\": \"Nguyễn Văn An\",\n  \"phone\": \"0901111115\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Cập nhật thông tin user theo ID (chỉ Admin). Thay :id trong URL."
+          }
+        },
+        {
+          "name": "Update User Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/10/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "10", "status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Khoá / mở khoá tài khoản user theo ID (chỉ Admin). Thay :id trong URL."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Get All Books",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "books"]
+            },
+            "description": "Lấy danh sách tất cả sách."
+          }
+        },
+        {
+          "name": "Get Book By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/books/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "books", "1"]
+            },
+            "description": "Lấy thông tin chi tiết 1 cuốn sách theo ID. Thay 1 bằng id cần tìm."
+          }
+        },
+        {
+          "name": "Create Book",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "books"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tôi Thấy Hoa Vàng Trên Cỏ Xanh\",\n  \"description\": \"Cuốn sách về tuổi thơ miền quê của Nguyễn Nhật Ánh.\",\n  \"isbn\": \"978-604-2-00011-0\",\n  \"publishYear\": 2010,\n  \"language\": \"Vietnamese\",\n  \"authorIds\": [1],\n  \"categoryIds\": [1]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Tạo mới một cuốn sách. authorIds và categoryIds là danh sách id."
+          }
+        },
+        {
+          "name": "Update Book By ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/books/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "books", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Cho Tôi Xin Một Vé Đi Tuổi Thơ\",\n  \"description\": \"Cuốn sách về ký ức tuổi thơ đầy màu sắc.\",\n  \"isbn\": \"978-604-2-00001-0\",\n  \"publishYear\": 2008,\n  \"language\": \"Vietnamese\",\n  \"authorIds\": [1],\n  \"categoryIds\": [1, 6]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Cập nhật thông tin sách theo ID. Thay 1 trong URL bằng id cần sửa."
+          }
+        },
+        {
+          "name": "Delete Book By ID",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "admin", "type": "string" },
+                { "key": "password", "value": "Password@123", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/books/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "books", "1"]
+            },
+            "description": "Xóa sách theo ID. Thay 1 trong URL bằng id cần xóa."
+          }
+        }
+      ]
+    }
+  ]
+}
