@@ -19,6 +19,7 @@ public class InventoryResponse {
     private String bookTitle;
     private Integer totalQuantity;
     private Integer availableQuantity;
+    private String changeType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -32,6 +33,7 @@ public class InventoryResponse {
                 .bookTitle(inventory.getBook() != null ? inventory.getBook().getTitle() : null)
                 .totalQuantity(inventory.getTotalQuantity())
                 .availableQuantity(inventory.getAvailableQuantity())
+                .changeType(inventory.getChangeType())
                 .createdAt(inventory.getCreatedAt())
                 .updatedAt(inventory.getUpdatedAt())
                 .build();

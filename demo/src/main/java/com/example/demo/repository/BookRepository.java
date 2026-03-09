@@ -1,5 +1,6 @@
 package com.example.demo.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -39,4 +40,15 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             	OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
             """, nativeQuery = true)
     Page<Book> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    // JPQL: JOIN (không fetch) để filter, tránh MultipleBagFetchException khi JOIN
+    // FETCH 2 List cùng lúc
+    // @Transactional(readOnly=true) ở service giữ session mở để lazy load hoạt động
+    @Query("SELECT DISTINCT b FROM Book b "
+            + "LEFT JOIN b.bookAuthors ba LEFT JOIN ba.author a "
+            + "LEFT JOIN b.bookCategories bc LEFT JOIN bc.category c "
+            + "WHERE LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+            + "OR LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+            + "OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Book> searchByKeywordJpql(@Param("keyword") String keyword);
 }

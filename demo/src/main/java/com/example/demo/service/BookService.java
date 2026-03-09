@@ -3,10 +3,12 @@ package com.example.demo.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.dto.request.AddAuthorsToBookRequest;
 import com.example.demo.dto.request.BookRequest;
 import com.example.demo.dto.response.BookResponse;
 import com.example.demo.entity.Author;
@@ -15,6 +17,7 @@ import com.example.demo.entity.BookAuthor;
 import com.example.demo.entity.BookCategory;
 import com.example.demo.entity.Category;
 import com.example.demo.repository.AuthorRepository;
+import com.example.demo.repository.BookAuthorRepository;
 import com.example.demo.repository.BookRepository;
 import com.example.demo.repository.BorrowItemRepository;
 import com.example.demo.repository.CategoryRepository;
@@ -29,6 +32,8 @@ public class BookService {
     private final AuthorRepository authorRepository;
     private final CategoryRepository categoryRepository;
     private final BorrowItemRepository borrowItemRepository;
+    private final BookAuthorRepository bookAuthorRepository;
+    private final InventoryService inventoryService;
 
     @Transactional
     public BookResponse createBook(BookRequest request) {
@@ -78,6 +83,7 @@ public class BookService {
         }
 
         book = bookRepository.save(book);
+        inventoryService.createInventoryForBook(book);
         return BookResponse.fromEntity(book);
     }
 
@@ -171,4 +177,37 @@ public class BookService {
         return BookResponse.fromEntity(book);
     }
 
+    @Transactional
+    public BookResponse addAuthorsToBook(Long id, AddAuthorsToBookRequest request) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với id: " + id));
+
+        for (Long authorId : request.getAuthorIds()) {
+            if (!authorRepository.existsById(authorId)) {
+                throw new RuntimeException("Không tìm thấy tác giả với id: " + authorId);
+            }
+            if (bookAuthorRepository.existsByBook_IdAndAuthor_Id(id, authorId)) {
+                throw new RuntimeException("Tác giả id " + authorId + " đã được gán cho sách này");
+            }
+        }
+
+        for (Long authorId : request.getAuthorIds()) {
+            Author author = authorRepository.getReferenceById(authorId);
+            book.getBookAuthors().add(new BookAuthor(book, author));
+        }
+
+        book = bookRepository.save(book);
+        return BookResponse.fromEntity(book);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookResponse> searchBook(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new RuntimeException("Từ khóa tìm kiếm không được để trống");
+        }
+        return bookRepository.searchByKeywordJpql(keyword.trim())
+                .stream()
+                .map(BookResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

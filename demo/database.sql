@@ -128,11 +128,33 @@ CREATE TABLE inventory (
     book_id            BIGINT     NOT NULL UNIQUE,
     total_quantity     INT        NOT NULL DEFAULT 0,
     available_quantity INT        NOT NULL DEFAULT 0,
+    change_type        VARCHAR(20),
     created_at         DATETIME,
     updated_at         DATETIME,
 
     CONSTRAINT fk_inventory_book FOREIGN KEY (book_id) REFERENCES books(id)
 );
+
+-- =========================================
+-- INVENTORY_LOGS
+-- Entity: InventoryLog.java | Table: inventory_logs
+-- change_type: IMPORT | ADJUST | BORROW | RETURN
+-- quantity_changed: dương = thêm, âm = bớt
+-- =========================================
+CREATE TABLE inventory_logs (
+    id               BIGINT      AUTO_INCREMENT PRIMARY KEY,
+    book_id          BIGINT      NOT NULL,
+    change_type      VARCHAR(20) NOT NULL,
+    quantity_changed INT         NOT NULL,
+    total_after      INT         NOT NULL,
+    available_after  INT         NOT NULL,
+    note             TEXT,
+    created_at       DATETIME,
+
+    CONSTRAINT fk_invlog_book FOREIGN KEY (book_id) REFERENCES books(id)
+);
+
+CREATE INDEX idx_invlog_book ON inventory_logs(book_id);
 
 -- =========================================
 -- BORROW_RECORDS

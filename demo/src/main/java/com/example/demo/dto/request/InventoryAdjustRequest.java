@@ -12,15 +12,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class InventoryRequest {
+public class InventoryAdjustRequest {
 
     @NotNull(message = "BookId không được để trống")
     @Positive(message = "BookId phải là số dương")
     private Long bookId;
 
-    @NotNull(message = "Số lượng không được để trống")
-    @Min(value = 1, message = "Số lượng nhập phải íd nhất là 1")
-    private Integer quantity;
+    // Số lượng tuyệt đối mới (không phải delta)
+    @NotNull(message = "Số lượng mới không được để trống")
+    @Min(value = 0, message = "Số lượng không được âm")
+    private Integer newTotalQuantity;
 
     private String note;
 }
