@@ -1,246 +1,304 @@
-# Library Management System — Backend API
+# Library Management System  Backend API
 
-A RESTful backend for a library management system, built with **Spring Boot**. Covers full CRUD for books, authors, categories, inventory tracking, and a complete borrow/return workflow.
+---
+
+## Giới thiệu
+
+**Library Management System** là một hệ thống quản lý thư viện backend được xây dựng bằng **Spring Boot**. Dự án mô phỏng nghiệp vụ thực tế của một thư viện: quản lý sách, tác giả, thể loại, tồn kho, và toàn bộ quy trình mượn  trả sách có kiểm soát tồn kho tự động.
+
+Mục tiêu của dự án là thực hành thiết kế REST API chuẩn, tổ chức code theo layered architecture, xử lý nghiệp vụ phức tạp (transaction, partial return, inventory audit log), và chuẩn bị nền tảng cho việc mở rộng thêm JWT, phân quyền, và báo cáo.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
+| Thành phần | Công nghệ |
 |---|---|
-| Language | Java 17 |
+| Ngôn ngữ | Java 17 |
 | Framework | Spring Boot 4.0.3 |
 | ORM | Spring Data JPA / Hibernate |
-| Security | Spring Security (HTTP Basic + BCrypt) |
-| Database | MySQL |
+| Bảo mật | Spring Security (HTTP Basic + BCrypt) |
+| Cơ sở dữ liệu | MySQL 8 |
 | Validation | Jakarta Bean Validation (`@Valid`) |
-| Utilities | Lombok |
+| Tiện ích | Lombok |
+| Build tool | Maven |
 
 ---
 
-## Project Structure
+## Kiến trúc hệ thống
+
+Dự án áp dụng **Layered Architecture** (kiến trúc phân tầng) gồm 4 tầng rõ ràng:
+
+```
+Controller    Service    Repository    Database (MySQL)
+                   
+  DTO (Request)   Entity
+  DTO (Response)
+```
 
 ```
 src/main/java/com/example/demo/
-├── config/          # Security configuration
-├── controller/      # REST controllers (6 modules)
-├── dto/
-│   ├── request/     # Input DTOs with validation
-│   └── response/    # Output DTOs + ApiResponse<T> wrapper
-├── entity/          # JPA entities (11 tables)
-├── handleException/ # Global exception handler
-├── repository/      # Spring Data JPA repositories
-└── service/         # Business logic layer
+ config/           # Cấu hình Spring Security
+ controller/       # Nhận request, trả response (6 module)
+ dto/
+    request/      # DTO đầu vào, có validation annotation
+    response/     # DTO đầu ra + wrapper ApiResponse<T>
+ entity/           # JPA entity ánh xạ 11 bảng DB
+ handleException/  # Global exception handler (@RestControllerAdvice)
+ repository/       # Spring Data JPA repositories
+ service/          # Toàn bộ business logic
 ```
 
 ---
 
-## Database Schema
+## Thiết kế cơ sở dữ liệu
+
+### Sơ đồ quan hệ
 
 ```
-Role ←── User ──→ BorrowRecord ──→ BorrowItem ──→ Book
-                                                    │
-                                            InventoryLog
-                                            Inventory (1-1)
-                                            BookAuthor  ──→ Author
-                                            BookCategory──→ Category
+Role  User  BorrowRecord  BorrowItem  Book
+                                                                    
+                                                              Inventory
+                                                            InventoryLog
+                                                            BookAuthor  Author
+                                                           BookCategory  Category
 ```
 
-**Tables:** `roles`, `users`, `books`, `authors`, `book_authors`, `categories`, `book_categories`, `inventory`, `inventory_logs`, `borrow_records`, `borrow_items`
+### Danh sách bảng
+
+| Bảng | Mô tả |
+|---|---|
+| `roles` | Vai trò người dùng |
+| `users` | Tài khoản người dùng |
+| `books` | Thông tin sách |
+| `authors` | Tác giả |
+| `book_authors` | Quan hệ nhiều-nhiều sách  tác giả |
+| `categories` | Thể loại sách |
+| `book_categories` | Quan hệ nhiều-nhiều sách  thể loại |
+| `inventory` | Tồn kho theo sách (1-1 với books) |
+| `inventory_logs` | Lịch sử thay đổi tồn kho |
+| `borrow_records` | Phiếu mượn sách |
+| `borrow_items` | Chi tiết từng đầu sách trong phiếu mượn |
+
+---
+
+## Tính năng chính
+
+### Quản lý sách, tác giả, thể loại
+- CRUD đầy đủ cho Book, Author, Category
+- Kiểm tra trùng tên (case-insensitive) khi tạo mới hoặc cập nhật
+- Gán nhiều tác giả và thể loại cho một cuốn sách
+- Tìm kiếm sách theo keyword (tiêu đề, tác giả, thể loại)
+
+### Quản lý tồn kho
+- Nhập kho, tăng/giảm số lượng khả dụng
+- Ghi `inventory_log` cho mọi thay đổi (IMPORT / BORROW / RETURN)  audit trail đầy đủ
+- Xem lịch sử thay đổi theo từng đầu sách
+
+### Mượn sách
+- Mượn nhiều đầu sách trong một request
+- Validate toàn bộ sách tồn tại và đủ tồn kho **trước** khi ghi bất kỳ dữ liệu nào
+- Trừ `available_quantity` và ghi log trong cùng một transaction  rollback hoàn toàn nếu lỗi
+
+### Trả sách
+- Hỗ trợ **trả từng phần** (partial return): trả dần nhiều lần
+- Tự động chuyển trạng thái phiếu thành `RETURNED` khi tất cả đầu sách đã trả đủ
+- Tăng `available_quantity` và ghi `inventory_log` loại `RETURN`
+
+### Quản lý người dùng
+- Đăng ký, đăng nhập, xem và cập nhật profile
+- Admin: tạo, cập nhật, khoá/mở khoá tài khoản
+- Xem lịch sử mượn của bản thân hoặc của bất kỳ user nào (admin)
 
 ---
 
 ## API Endpoints
 
-All endpoints are prefixed with `/api/v1`.
+Tất cả endpoint đều có prefix `/api/v1`.
 
-### Auth / Users — `/api/v1/users`
+### Người dùng  `/api/v1/users`
 
-| Method | Path | Description |
+| Method | Path | Mô tả |
 |---|---|---|
-| `POST` | `/users/register` | Register new account |
-| `POST` | `/users/login` | Login |
-| `GET` | `/users/me` | Get own profile |
-| `PUT` | `/users/me` | Update own profile |
-| `GET` | `/users/me/borrow-history` | Own borrow history (paged) |
-| `GET` | `/users/me/current-borrows` | Currently borrowed books (paged) |
-| `POST` | `/users` | Admin: create user |
-| `PUT` | `/users/{id}` | Admin: update user |
-| `PATCH` | `/users/{id}/status` | Admin: activate / deactivate user |
-| `GET` | `/users` | Admin: list all users |
-| `GET` | `/users/{userId}/borrow-history` | Admin: view any user's borrow history |
+| `POST` | `/users/register` | Đăng ký tài khoản |
+| `POST` | `/users/login` | Đăng nhập |
+| `GET` | `/users/me` | Xem profile của chính mình |
+| `PUT` | `/users/me` | Cập nhật profile |
+| `GET` | `/users/me/borrow-history` | Lịch sử mượn sách của mình (paged) |
+| `GET` | `/users/me/current-borrows` | Sách đang mượn chưa trả (paged) |
+| `POST` | `/users` | Admin: tạo user mới |
+| `PUT` | `/users/{id}` | Admin: cập nhật user |
+| `PATCH` | `/users/{id}/status` | Admin: khoá / mở khoá tài khoản |
+| `GET` | `/users` | Admin: danh sách tất cả user |
+| `GET` | `/users/{userId}/borrow-history` | Admin: lịch sử mượn của user bất kỳ |
 
-### Books — `/api/v1/books`
+### Sách  `/api/v1/books`
 
-| Method | Path | Description |
+| Method | Path | Mô tả |
 |---|---|---|
-| `POST` | `/books` | Create book |
-| `GET` | `/books` | List all books |
-| `GET` | `/books/{id}` | Get book detail |
-| `PUT` | `/books/{id}` | Update book |
-| `DELETE` | `/books/{id}` | Delete book |
-| `POST` | `/books/{id}/authors` | Assign authors to book |
-| `GET` | `/books/search?keyword=` | Search by title / author / category |
+| `POST` | `/books` | Tạo sách mới |
+| `GET` | `/books` | Danh sách tất cả sách |
+| `GET` | `/books/{id}` | Chi tiết một cuốn sách |
+| `PUT` | `/books/{id}` | Cập nhật sách |
+| `DELETE` | `/books/{id}` | Xoá sách |
+| `POST` | `/books/{id}/authors` | Gán tác giả cho sách |
+| `GET` | `/books/search?keyword=` | Tìm kiếm sách |
 
-### Authors — `/api/v1/authors`
+### Tác giả  `/api/v1/authors`
 
-| Method | Path | Description |
+| Method | Path | Mô tả |
 |---|---|---|
-| `POST` | `/authors` | Create author |
-| `GET` | `/authors` | List all authors |
-| `GET` | `/authors/{id}` | Get author |
-| `PUT` | `/authors/{id}` | Update author |
-| `DELETE` | `/authors/{id}` | Delete author |
+| `POST` | `/authors` | Tạo tác giả |
+| `GET` | `/authors` | Danh sách tác giả |
+| `GET` | `/authors/{id}` | Chi tiết tác giả |
+| `PUT` | `/authors/{id}` | Cập nhật tác giả |
+| `DELETE` | `/authors/{id}` | Xoá tác giả |
 
-### Categories — `/api/v1/categories`
+### Thể loại  `/api/v1/categories`
 
-| Method | Path | Description |
+| Method | Path | Mô tả |
 |---|---|---|
-| `POST` | `/categories` | Create category |
-| `GET` | `/categories` | List all categories |
-| `GET` | `/categories/{id}` | Get category |
-| `PUT` | `/categories/{id}` | Update category |
-| `DELETE` | `/categories/{id}` | Delete category |
+| `POST` | `/categories` | Tạo thể loại |
+| `GET` | `/categories` | Danh sách thể loại |
+| `GET` | `/categories/{id}` | Chi tiết thể loại |
+| `PUT` | `/categories/{id}` | Cập nhật thể loại |
+| `DELETE` | `/categories/{id}` | Xoá thể loại |
 
-### Inventory — `/api/v1/inventory`
+### Tồn kho  `/api/v1/inventory`
 
-| Method | Path | Description |
+| Method | Path | Mô tả |
 |---|---|---|
-| `POST` | `/inventory/add` | Import stock for a book |
-| `PATCH` | `/inventory/decrease` | Decrease available stock |
-| `PATCH` | `/inventory/increase` | Increase available stock |
-| `GET` | `/inventory` | List all inventory |
-| `GET` | `/inventory/{bookId}` | Get inventory for a book |
-| `GET` | `/inventory/logs` | All stock change logs |
-| `GET` | `/inventory/logs/{bookId}` | Stock change logs for a book |
+| `POST` | `/inventory/add` | Nhập kho sách |
+| `PATCH` | `/inventory/decrease` | Giảm số lượng khả dụng |
+| `PATCH` | `/inventory/increase` | Tăng số lượng khả dụng |
+| `GET` | `/inventory` | Danh sách tồn kho |
+| `GET` | `/inventory/{bookId}` | Tồn kho của một cuốn sách |
+| `GET` | `/inventory/logs` | Toàn bộ lịch sử thay đổi kho |
+| `GET` | `/inventory/logs/{bookId}` | Lịch sử thay đổi kho của một cuốn sách |
 
-### Borrow & Return — `/api/v1/borrow`
+### Mượn & Trả  `/api/v1/borrow`
 
-| Method | Path | Description |
+| Method | Path | Mô tả |
 |---|---|---|
-| `POST` | `/borrow` | Create borrow record (multiple books in one request) |
-| `POST` | `/borrow/{borrowId}/return` | Return books (supports partial return) |
-| `GET` | `/borrow` | List all borrow records (paged) |
-| `GET` | `/borrow/{id}` | Get borrow record detail |
+| `POST` | `/borrow` | Tạo phiếu mượn (nhiều sách/request) |
+| `POST` | `/borrow/{borrowId}/return` | Trả sách (hỗ trợ trả từng phần) |
+| `GET` | `/borrow` | Danh sách phiếu mượn (paged) |
+| `GET` | `/borrow/{id}` | Chi tiết phiếu mượn |
 
 ---
 
-## Key Business Logic
+## Ví dụ Request / Response
 
-### Borrow Flow
-1. Validate all books exist and have sufficient `available_quantity` **before** any write
-2. Create `borrow_record` (status: `BORROWING`)
-3. Create `borrow_item` per book with `returned_quantity = 0`
-4. Decrease `inventory.available_quantity` per book
-5. Write `inventory_log` with `change_type = BORROW`
-6. Full rollback via `@Transactional` if any step fails
+### Tạo phiếu mượn  `POST /api/v1/borrow`
 
-### Return Flow (supports partial return)
-1. Reject if record is already `RETURNED`
-2. Validate each book belongs to the record and `returnQuantity ≤ remaining`
-3. Update `borrow_item.returned_quantity`
-4. Increase `inventory.available_quantity`
-5. Write `inventory_log` with `change_type = RETURN`
-6. If all items fully returned → set record status to `RETURNED`
-
-### Inventory Logging
-Every stock change (import, borrow, return) writes an `inventory_log` entry capturing `change_type`, `quantity_changed`, `total_after`, and `available_after` — providing a full audit trail.
-
----
-
-## Response Format
-
-All endpoints return a consistent envelope:
-
+**Request:**
 ```json
 {
-  "success": true,
-  "message": "...",
-  "data": { }
+  "items": [
+    { "bookId": 1, "quantity": 2 },
+    { "bookId": 3, "quantity": 1 }
+  ],
+  "dueDate": "2026-03-23"
 }
 ```
 
-Validation errors return `400` with field-level detail:
-
+**Response `200 OK`:**
 ```json
 {
-  "timestamp": "...",
+  "success": true,
+  "message": "Mượn sách thành công",
+  "data": {
+    "record": {
+      "id": 5,
+      "userId": 2,
+      "username": "nguyenvana",
+      "borrowDate": "2026-03-09",
+      "dueDate": "2026-03-23",
+      "status": "BORROWING"
+    },
+    "items": [
+      { "bookId": 1, "bookTitle": "Clean Code", "quantity": 2, "returnedQuantity": 0 },
+      { "bookId": 3, "bookTitle": "Spring Boot in Action", "quantity": 1, "returnedQuantity": 0 }
+    ]
+  }
+}
+```
+
+**Response lỗi validation `400 Bad Request`:**
+```json
+{
+  "timestamp": "2026-03-09T10:00:00",
   "status": 400,
   "error": "Validation failed",
   "details": {
-    "name": "Tên không được để trống"
+    "items": "Danh sách sách mượn không được để trống"
   }
 }
 ```
 
 ---
 
-## Getting Started
+## Hướng dẫn chạy local
 
-### Prerequisites
+### Yêu cầu
 - Java 17+
 - MySQL 8+
 - Maven 3.8+
 
-### Setup
+### Các bước
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/library-management.git
-   cd library-management/demo
-   ```
-
-2. **Create the database**
-   ```sql
-   CREATE DATABASE library_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-   Then import the schema:
-   ```bash
-   mysql -u root -p library_db < database.sql
-   ```
-
-3. **Configure credentials**
-
-   Edit `src/main/resources/application.properties`:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/library_db
-   spring.datasource.username=your_username
-   spring.datasource.password=your_password
-   ```
-
-4. **Run the application**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-   The server starts on `http://localhost:8080`.
-
----
-
-## Authentication
-
-The API uses **HTTP Basic Authentication**. Include credentials in the `Authorization` header:
-
-```
-Authorization: Basic base64(username:password)
+**1. Clone repository**
+```bash
+git clone https://github.com/your-username/library-management.git
+cd library-management
 ```
 
-Public endpoints (no auth required):
-- `POST /api/v1/users/register`
-- `POST /api/v1/users/login`
+**2. Tạo database và import schema**
+```sql
+CREATE DATABASE library_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+```bash
+mysql -u root -p library_db < database.sql
+```
+
+**3. Cấu hình kết nối DB**
+
+Chỉnh sửa file `demo/src/main/resources/application.properties`:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/library_db
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+```
+
+**4. Chạy ứng dụng**
+```bash
+cd demo
+./mvnw spring-boot:run
+```
+Server khởi động tại `http://localhost:8080`.
+
+**5. Import Postman Collection**
+
+Import file `LibraryManagement.postman_collection.json` vào Postman để có sẵn toàn bộ request mẫu.
+
+> **Xác thực:** API dùng **HTTP Basic Authentication**. Thêm header `Authorization: Basic base64(username:password)` vào mỗi request cần xác thực.
 
 ---
 
-## Postman Collection
+## Hướng phát triển tiếp theo
 
-Import `LibraryManagement.postman_collection.json` from the root of the repository to get all pre-built requests.
+- [ ] Thay HTTP Basic bằng **JWT Authentication**
+- [ ] Phân quyền theo role (`ADMIN` / `LIBRARIAN` / `MEMBER`) bằng `@PreAuthorize`
+- [ ] API phát hiện sách quá hạn (`GET /api/v1/borrow/overdue`)
+- [ ] Báo cáo thống kê: top sách được mượn nhiều nhất, top user tích cực
+- [ ] Tích hợp **Swagger / OpenAPI** tự động sinh tài liệu API
+- [ ] Viết **Unit test** và **Integration test** cho các flow nghiệp vụ chính
+- [ ] Tối ưu N+1 query bằng batch load hoặc `JOIN FETCH`
 
 ---
 
-## Roadmap
+## Tác giả
 
-- [ ] JWT authentication (replace HTTP Basic)
-- [ ] Role-based access control (`ADMIN` / `LIBRARIAN` / `MEMBER`)
-- [ ] Overdue detection endpoint (`GET /api/v1/borrow/overdue`)
-- [ ] Reporting endpoints (top books, top users, borrowing stats)
-- [ ] Swagger / OpenAPI documentation
-- [ ] Unit & integration tests
+Dự án được phát triển trong khuôn khổ luyện tập backend Java Spring Boot, hướng đến việc xây dựng một hệ thống hoàn chỉnh từ thiết kế DB đến triển khai API có thể mở rộng.
+
+> Mọi góp ý hoặc câu hỏi vui lòng tạo Issue hoặc liên hệ qua email.
