@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.request.ChangePasswordRequest;
 import com.example.demo.dto.request.LoginRequest;
 import com.example.demo.dto.request.ProfileUpdateRequest;
 import com.example.demo.dto.request.UserRequest;
@@ -17,6 +18,7 @@ import com.example.demo.dto.request.UserStatusUpdateRequest;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
+import com.example.demo.repository.BorrowRecordRepository;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 
@@ -28,6 +30,7 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BorrowRecordRepository borrowRecordRepository;
 
     public UserResponse register(UserRequest userRequest) {
         if (userRepository.existsByEmail(userRequest.getEmail())) {
@@ -190,6 +193,26 @@ public class UserService implements UserDetailsService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
         return UserResponse.fromEntity(user);
+    }
+
+    public void changePassword(String username, ChangePasswordRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    public void deleteUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
+        if (borrowRecordRepository.existsByUser_Id(id)) {
+            throw new RuntimeException("Không thể xóa user vì đã có lịch sử mượn sách");
+        }
+        userRepository.delete(user);
     }
 
     public List<UserResponse> getAllUser() {

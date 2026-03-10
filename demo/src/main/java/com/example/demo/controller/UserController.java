@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.dto.request.ChangePasswordRequest;
 import com.example.demo.dto.request.LoginRequest;
 import com.example.demo.dto.request.ProfileUpdateRequest;
 import com.example.demo.dto.request.UserRequest;
@@ -72,6 +74,18 @@ public class UserController {
                                 .data(userResponse)
                                 .build();
                 return ResponseEntity.ok(apiResponse);
+        }
+
+        // đổi mật khẩu (chỉ đổi password, giữ nguyên các trường khác)
+        @PatchMapping("/me/password")
+        public ResponseEntity<ApiResponse<Void>> changePassword(
+                        @Valid @RequestBody ChangePasswordRequest changePasswordRequest,
+                        Authentication authentication) {
+                userService.changePassword(authentication.getName(), changePasswordRequest);
+                return ResponseEntity.ok(ApiResponse.<Void>builder()
+                                .success(true)
+                                .message("Đổi mật khẩu thành công")
+                                .build());
         }
 
         // cập nhật profile (cho cập nhật tất cả trừ password)
@@ -164,6 +178,16 @@ public class UserController {
                                 .success(true)
                                 .message("Lấy lịch sử mượn sách của user thành công")
                                 .data(data)
+                                .build());
+        }
+
+        // xóa user theo id (chỉ admin)
+        @DeleteMapping("/{id}")
+        public ResponseEntity<ApiResponse<Void>> deleteUserById(@PathVariable Long id) {
+                userService.deleteUserById(id);
+                return ResponseEntity.ok(ApiResponse.<Void>builder()
+                                .success(true)
+                                .message("Xóa user thành công")
                                 .build());
         }
 
