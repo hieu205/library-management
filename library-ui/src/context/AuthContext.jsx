@@ -53,10 +53,10 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const role = user?.role || 'MEMBER';
+    const role = user?.role || 'USER';
     const isAdmin = role === 'ADMIN';
     const isLibrarian = role === 'LIBRARIAN';
-    const isMember = role === 'MEMBER';
+    const isMember = role === 'USER';
 
     return (
         <AuthContext.Provider

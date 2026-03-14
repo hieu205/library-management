@@ -3,8 +3,11 @@ import { IoAdd, IoSearch, IoPencil, IoTrash, IoEye } from 'react-icons/io5';
 import { bookService, authorService, categoryService } from '../../services/api';
 import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 export default function BookList() {
+    const { isAdmin, isLibrarian } = useAuth();
+    const canManage = isAdmin || isLibrarian;
     const [books, setBooks] = useState([]);
     const [authors, setAuthors] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -22,12 +25,16 @@ export default function BookList() {
 
     const loadData = async () => {
         try {
-            const [booksRes, authorsRes, catsRes] = await Promise.all([
-                bookService.getAll(), authorService.getAll(), categoryService.getAll(),
-            ]);
+            const requests = [bookService.getAll()];
+            if (canManage) {
+                requests.push(authorService.getAll(), categoryService.getAll());
+            }
+
+            const responses = await Promise.all(requests);
+            const [booksRes, authorsRes, catsRes] = responses;
             setBooks(booksRes.data.data || []);
-            setAuthors(authorsRes.data.data || []);
-            setCategories(catsRes.data.data || []);
+            setAuthors(authorsRes?.data?.data || []);
+            setCategories(catsRes?.data?.data || []);
         } catch { toast.error('Không thể tải danh sách sách'); }
         finally { setLoading(false); }
     };
@@ -67,6 +74,9 @@ export default function BookList() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!canManage) {
+            return;
+        }
         const payload = {
             ...form,
             publishYear: form.publishYear ? parseInt(form.publishYear) : null,
@@ -87,6 +97,9 @@ export default function BookList() {
     };
 
     const handleDelete = async (id) => {
+        if (!canManage) {
+            return;
+        }
         if (!confirm('Bạn có chắc muốn xóa sách này?')) return;
         try {
             await bookService.delete(id);
@@ -106,12 +119,14 @@ export default function BookList() {
         <div>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Quản lý Sách</h1>
+                    <h1 className="page-title">{canManage ? 'Quản lý Sách' : 'Danh sách Sách'}</h1>
                     <p className="page-title-sub">{books.length} cuốn sách trong thư viện</p>
                 </div>
-                <div className="page-actions">
-                    <button className="btn btn-primary" onClick={openCreate}><IoAdd /> Thêm sách</button>
-                </div>
+                {canManage && (
+                    <div className="page-actions">
+                        <button className="btn btn-primary" onClick={openCreate}><IoAdd /> Thêm sách</button>
+                    </div>
+                )}
             </div>
 
             <div className="table-wrapper">
@@ -127,7 +142,7 @@ export default function BookList() {
                         <thead>
                             <tr>
                                 <th>ID</th><th>Tiêu đề</th><th>ISBN</th><th>Năm XB</th>
-                                <th>Tác giả</th><th>Thể loại</th><th>Thao tác</th>
+                                <th>Tác giả</th><th>Thể loại</th><th>{canManage ? 'Thao tác' : 'Chi tiết'}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -154,8 +169,8 @@ export default function BookList() {
                                     <td>
                                         <div className="table-actions">
                                             <button className="btn btn-ghost btn-sm" onClick={() => { setSelectedBook(book); setDetailModal(true); }}><IoEye /></button>
-                                            <button className="btn btn-ghost btn-sm" onClick={() => openEdit(book)}><IoPencil /></button>
-                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(book.id)}><IoTrash /></button>
+                                            {canManage && <button className="btn btn-ghost btn-sm" onClick={() => openEdit(book)}><IoPencil /></button>}
+                                            {canManage && <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(book.id)}><IoTrash /></button>}
                                         </div>
                                     </td>
                                 </tr>
@@ -166,9 +181,10 @@ export default function BookList() {
             </div>
 
             {/* Create/Edit Modal */}
-            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
-                title={selectedBook ? 'Chỉnh sửa sách' : 'Thêm sách mới'} size="lg">
-                <form onSubmit={handleSubmit}>
+            {canManage && (
+                <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
+                    title={selectedBook ? 'Chỉnh sửa sách' : 'Thêm sách mới'} size="lg">
+                    <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Tiêu đề *</label>
                         <input type="text" className="form-control" required
@@ -220,12 +236,13 @@ export default function BookList() {
                             ))}
                         </div>
                     </div>
-                    <div className="form-actions">
-                        <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Hủy</button>
-                        <button type="submit" className="btn btn-primary">{selectedBook ? 'Cập nhật' : 'Thêm mới'}</button>
-                    </div>
-                </form>
-            </Modal>
+                        <div className="form-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Hủy</button>
+                            <button type="submit" className="btn btn-primary">{selectedBook ? 'Cập nhật' : 'Thêm mới'}</button>
+                        </div>
+                    </form>
+                </Modal>
+            )}
 
             {/* Detail Modal */}
             <Modal isOpen={detailModal} onClose={() => setDetailModal(false)}

@@ -3,12 +3,12 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     IoLibrary, IoBookSharp, IoPeople, IoLogOut, IoMenu, IoClose,
-    IoGrid, IoPerson, IoLayers, IoArchive, IoSwapHorizontal, IoStatsChart
+    IoGrid, IoPerson, IoLayers, IoArchive, IoSwapHorizontal, IoStatsChart, IoLogIn
 } from 'react-icons/io5';
 import { Toaster } from 'react-hot-toast';
 
 export default function Layout() {
-    const { user, logout, isAdmin, isLibrarian } = useAuth();
+    const { user, logout, isAdmin, isLibrarian, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -18,14 +18,23 @@ export default function Layout() {
     };
 
     const navItems = [
-        { to: '/', icon: <IoGrid />, label: 'Dashboard' },
-        { to: '/books', icon: <IoBookSharp />, label: 'Sách' },
-        { to: '/authors', icon: <IoPerson />, label: 'Tác giả' },
-        { to: '/categories', icon: <IoLayers />, label: 'Thể loại' },
+        { to: '/', icon: <IoLibrary />, label: 'Thư viện sách' },
+        ...(isAuthenticated && isAdmin ? [{ to: '/dashboard', icon: <IoGrid />, label: 'Dashboard' }] : []),
+        ...(isAuthenticated && (isAdmin || isLibrarian)
+            ? [{ to: '/books/manage', icon: <IoBookSharp />, label: 'Quản lý sách' }]
+            : []),
+        ...(isAuthenticated && (isAdmin || isLibrarian)
+            ? [
+                { to: '/authors', icon: <IoPerson />, label: 'Tác giả' },
+                { to: '/categories', icon: <IoLayers />, label: 'Thể loại' },
+            ]
+            : []),
         ...(isAdmin || isLibrarian ? [{ to: '/inventory', icon: <IoArchive />, label: 'Kho sách' }] : []),
-        { to: '/borrow', icon: <IoSwapHorizontal />, label: 'Mượn / Trả' },
+        ...(isAuthenticated && (isAdmin || isLibrarian)
+            ? [{ to: '/borrow', icon: <IoSwapHorizontal />, label: 'Mượn / Trả' }]
+            : []),
         ...(isAdmin ? [{ to: '/users', icon: <IoPeople />, label: 'Người dùng' }] : []),
-        { to: '/profile', icon: <IoStatsChart />, label: 'Hồ sơ' },
+        ...(isAuthenticated ? [{ to: '/profile', icon: <IoStatsChart />, label: 'Hồ sơ' }] : []),
     ];
 
     return (
@@ -73,16 +82,24 @@ export default function Layout() {
                 <div className="sidebar-footer">
                     <div className="user-info">
                         <div className="user-avatar">
-                            {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                            {user?.fullName?.charAt(0)?.toUpperCase() || 'G'}
                         </div>
                         <div className="user-details">
-                            <span className="user-name">{user?.fullName || 'User'}</span>
-                            <span className="user-role">{user?.role || 'Member'}</span>
+                            <span className="user-name">{user?.fullName || 'Khách'}</span>
+                            <span className="user-role">{user?.role || 'Guest'}</span>
                         </div>
                     </div>
-                    <button className="logout-btn" onClick={handleLogout} title="Đăng xuất">
-                        <IoLogOut />
-                    </button>
+                    {isAuthenticated ? (
+                        <button className="logout-btn" onClick={handleLogout} title="Đăng xuất">
+                            <IoLogOut />
+                        </button>
+                    ) : (
+                        <div className="auth-buttons">
+                            <NavLink to="/login" className="btn btn-primary btn-sm">
+                                <IoLogIn /> Đăng nhập
+                            </NavLink>
+                        </div>
+                    )}
                 </div>
             </aside>
 
@@ -93,7 +110,7 @@ export default function Layout() {
                         <IoMenu />
                     </button>
                     <div className="topbar-right">
-                        <span className="greeting">Xin chào, <strong>{user?.fullName || 'User'}</strong></span>
+                        <span className="greeting">Xin chào, <strong>{user?.fullName || 'Khách'}</strong></span>
                     </div>
                 </header>
 

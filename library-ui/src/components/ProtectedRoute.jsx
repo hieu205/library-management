@@ -1,8 +1,10 @@
 import { Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children }) {
     const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
 
     if (loading) {
         return (
@@ -14,6 +16,10 @@ export default function ProtectedRoute({ children }) {
     }
 
     if (!isAuthenticated) {
+        const publicPaths = ['/', '/books'];
+        if (publicPaths.includes(location.pathname)) {
+            return children;
+        }
         return <Navigate to="/login" replace />;
     }
 

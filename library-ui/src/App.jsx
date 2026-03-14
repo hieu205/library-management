@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleRoute from './components/RoleRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import BookCatalog from './pages/books/BookCatalog';
 import BookList from './pages/books/BookList';
 import AuthorList from './pages/authors/AuthorList';
 import CategoryList from './pages/categories/CategoryList';
@@ -30,15 +32,68 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
-            <Route path="books" element={<BookList />} />
-            <Route path="authors" element={<AuthorList />} />
-            <Route path="categories" element={<CategoryList />} />
-            <Route path="inventory" element={<InventoryList />} />
-            <Route path="borrow" element={<BorrowList />} />
-            <Route path="users" element={<UserList />} />
+            <Route index element={<BookCatalog />} />
+            <Route
+              path="dashboard"
+              element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <Dashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="books/manage"
+              element={
+                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                  <BookList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="authors"
+              element={
+                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                  <AuthorList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="categories"
+              element={
+                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                  <CategoryList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="inventory"
+              element={
+                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                  <InventoryList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="borrow"
+              element={
+                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                  <BorrowList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <UserList />
+                </RoleRoute>
+              }
+            />
             <Route path="profile" element={<Profile />} />
           </Route>
+
+          {/* Backward compatibility */}
+          <Route path="/books" element={<Navigate to="/" replace />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
