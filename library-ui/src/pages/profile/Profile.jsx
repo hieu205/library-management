@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function Profile() {
-    const { user, refreshProfile } = useAuth();
+    const { user, refreshProfile, logout } = useAuth();
+    const navigate = useNavigate();
     const [tab, setTab] = useState('info'); // 'info' | 'history' | 'current' | 'password'
     const [editing, setEditing] = useState(false);
-    const [form, setForm] = useState({ fullName: '', email: '', phone: '' });
-    const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
+    const [form, setForm] = useState({ fullName: '', email: '', phone: '', username: '' });
+    const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [history, setHistory] = useState([]);
     const [currentBorrows, setCurrentBorrows] = useState([]);
     const [loadingData, setLoadingData] = useState(false);
 
     useEffect(() => {
         if (user) {
-            setForm({ fullName: user.fullName || '', email: user.email || '', phone: user.phone || '' });
+            setForm({ fullName: user.fullName || '', email: user.email || '', phone: user.phone || '', username: user.username || '' });
         }
     }, [user]);
 
@@ -62,12 +64,13 @@ export default function Profile() {
         }
         try {
             await authService.changePassword({
-                oldPassword: passwordForm.oldPassword,
+                currentPassword: passwordForm.currentPassword,
                 newPassword: passwordForm.newPassword,
             });
-            toast.success('Đổi mật khẩu thành công!');
-            setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
-            setTab('info');
+            toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
+            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            logout();
+            navigate('/login');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Đổi mật khẩu thất bại!');
         }
@@ -239,8 +242,8 @@ export default function Profile() {
                     <form onSubmit={handleChangePassword}>
                         <div className="form-group">
                             <label>Mật khẩu hiện tại</label>
-                            <input type="password" className="form-control" required value={passwordForm.oldPassword}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })} />
+                            <input type="password" className="form-control" required value={passwordForm.currentPassword}
+                                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} />
                         </div>
                         <div className="form-group">
                             <label>Mật khẩu mới</label>

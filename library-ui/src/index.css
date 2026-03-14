@@ -21,10 +21,7 @@
   --accent-cyan: #06b6d4;
   --accent-pink: #db2777;
 
-  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  --gradient-success: linear-gradient(135deg, #16a34a 0%, #06b6d4 100%);
-  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #db2777 100%);
-  --gradient-warm: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  /* Solid accent colors — no gradients */
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -49,11 +46,11 @@
   --radius-full: 9999px;
 
   /* ── Shadows ── */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.15);
-  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow-blue: 0 4px 14px rgba(37, 99, 235, 0.18);
+  --shadow-glow-purple: 0 4px 14px rgba(139, 92, 246, 0.18);
 
   /* ── Transitions ── */
   --transition-fast: 150ms ease;
@@ -140,16 +137,12 @@ input, select, textarea {
 .sidebar-logo-icon {
   font-size: 28px;
   color: var(--accent-blue);
-  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
 }
 
 .sidebar-title {
   font-size: 1.25rem;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1e40af;
 }
 
 .sidebar-close-btn {
@@ -232,7 +225,7 @@ input, select, textarea {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background: var(--gradient-primary);
+  background: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -346,18 +339,9 @@ input, select, textarea {
 .auth-page::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-              radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
-  animation: bgFloat 15s ease-in-out infinite;
-}
-
-@keyframes bgFloat {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-2%, -2%); }
+  inset: 0;
+  background: #dbeafe;
+  opacity: 0.35;
 }
 
 .auth-card {
@@ -399,10 +383,7 @@ input, select, textarea {
 
 .auth-logo h1 {
   font-size: 1.5rem;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1e40af;
 }
 
 .auth-subtitle {
@@ -497,12 +478,12 @@ textarea.form-control {
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: #2563eb;
   color: #fff;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  background: #1d4ed8;
   box-shadow: var(--shadow-glow-blue);
   transform: translateY(-1px);
 }
@@ -518,12 +499,12 @@ textarea.form-control {
 }
 
 .btn-success {
-  background: var(--gradient-success);
+  background: #16a34a;
   color: #fff;
 }
 
 .btn-success:hover {
-  filter: brightness(1.1);
+  background: #15803d;
   transform: translateY(-1px);
 }
 
@@ -1110,7 +1091,7 @@ tr:hover td {
   width: 80px;
   height: 80px;
   border-radius: var(--radius-full);
-  background: var(--gradient-primary);
+  background: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;

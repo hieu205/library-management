@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const role = user?.role || 'USER';
+    const role = user?.role || null;
     const isAdmin = role === 'ADMIN';
     const isLibrarian = role === 'LIBRARIAN';
     const isMember = role === 'USER';
