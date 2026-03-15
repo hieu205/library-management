@@ -301,4 +301,8 @@ Import file `LibraryManagement.postman_collection.json` vào Postman để có s
 
 Dự án được phát triển trong khuôn khổ luyện tập backend Java Spring Boot, hướng đến việc xây dựng một hệ thống hoàn chỉnh từ thiết kế DB đến triển khai API có thể mở rộng.
 
+<<<<<<< HEAD
 > Mọi góp ý hoặc câu hỏi vui lòng tạo Issue hoặc liên hệ qua email.
+=======
+> Mọi góp ý hoặc câu hỏi vui lòng tạo Issue hoặc liên hệ qua email.
+>>>>>>> 0cc3829a5f88782b9eb4c7f1101b08ab3b27a2e7

@@ -210,4 +210,15 @@ public class BookService {
                 .map(BookResponse::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<BookResponse> getBooksByAuthorId(Long authorId) {
+        if (!authorRepository.existsById(authorId)) {
+            throw new RuntimeException("Không tìm thấy tác giả với id: " + authorId);
+        }
+        return bookRepository.findByAuthorId(authorId)
+                .stream()
+                .map(BookResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

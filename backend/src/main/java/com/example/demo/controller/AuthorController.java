@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.request.AuthorRequest;
 import com.example.demo.dto.response.ApiResponse;
 import com.example.demo.dto.response.AuthorResponse;
+import com.example.demo.dto.response.BookResponse;
 import com.example.demo.service.AuthorService;
+import com.example.demo.service.BookService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthorController {
     private final AuthorService authorService;
+    private final BookService bookService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<AuthorResponse>> createAuthor(
@@ -76,6 +79,17 @@ public class AuthorController {
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
                 .message("Xóa tác giả thành công")
+                .build());
+    }
+
+    // lấy danh sách sách theo tác giả
+    @GetMapping("/{id}/books")
+    public ResponseEntity<ApiResponse<List<BookResponse>>> getBooksByAuthor(@PathVariable Long id) {
+        List<BookResponse> data = bookService.getBooksByAuthorId(id);
+        return ResponseEntity.ok(ApiResponse.<List<BookResponse>>builder()
+                .success(true)
+                .message("Lấy danh sách sách theo tác giả thành công")
+                .data(data)
                 .build());
     }
 }

@@ -113,6 +113,32 @@ public class BorrowService {
             itemResponses.add(BorrowItemResponse.fromEntity(item));
         }
 
+        // Trừ tồn kho và ghi log xuất kho cho từng sách đã mượn
+        for (int i = 0; i < request.getItems().size(); i++) {
+            BorrowRequest.BorrowItemLine itemLine = request.getItems().get(i);
+            Inventory inventory = inventories.get(i);
+
+            int newAvailable = inventory.getAvailableQuantity() - itemLine.getQuantity();
+            if (newAvailable < 0) {
+                throw new RuntimeException(
+                        "Sách \"" + books.get(i).getTitle() + "\" không đủ tồn kho tại thời điểm ghi nhận mượn");
+            }
+
+            inventory.setAvailableQuantity(newAvailable);
+            inventory.setUpdatedAt(LocalDateTime.now());
+            inventoryRepository.save(inventory);
+
+            inventoryLogRepository.save(InventoryLog.builder()
+                    .book(books.get(i))
+                    .changeType(InventoryLog.EXPORT)
+                    .quantityChanged(-itemLine.getQuantity())
+                    .totalAfter(inventory.getTotalQuantity())
+                    .availableAfter(newAvailable)
+                    .note("Mượn sách - phiếu mượn id: " + borrowRecord.getId())
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
+
         return BorrowResponse.builder()
                 .record(BorrowRecordResponse.fromEntity(borrowRecord))
                 .items(itemResponses)
@@ -159,6 +185,10 @@ public class BorrowService {
                     .orElseThrow(() -> new RuntimeException(
                             "Không tìm thấy tồn kho cho sách id: " + x.getBookId()));
             int newAvailable = inventory.getAvailableQuantity() + x.getReturnQuantity();
+                if (newAvailable > inventory.getTotalQuantity()) {
+                throw new RuntimeException(
+                    "Số lượng trả vượt quá tổng tồn kho của sách id " + x.getBookId());
+                }
             inventory.setAvailableQuantity(newAvailable);
             inventory.setChangeType("RETURN");
             inventory.setUpdatedAt(LocalDateTime.now());
