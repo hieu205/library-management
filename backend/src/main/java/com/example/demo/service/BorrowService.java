@@ -185,10 +185,6 @@ public class BorrowService {
                     .orElseThrow(() -> new RuntimeException(
                             "Không tìm thấy tồn kho cho sách id: " + x.getBookId()));
             int newAvailable = inventory.getAvailableQuantity() + x.getReturnQuantity();
-                if (newAvailable > inventory.getTotalQuantity()) {
-                throw new RuntimeException(
-                    "Số lượng trả vượt quá tổng tồn kho của sách id " + x.getBookId());
-                }
             inventory.setAvailableQuantity(newAvailable);
             inventory.setChangeType("RETURN");
             inventory.setUpdatedAt(LocalDateTime.now());

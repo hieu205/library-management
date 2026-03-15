@@ -1,112 +1,384 @@
 -- =========================================
 -- Library Management System
--- Database schema + rich sample data
--- Aligned with entities/services in demo/src/main/java/com/example/demo
+-- Sample data only
 -- Default sample password for all users: Password@123
 -- =========================================
-SET
-    NAMES utf8mb4;
-
-CREATE DATABASE IF NOT EXISTS library_db CHARACTER
-SET
-    utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 USE library_db;
 
-SET
-    FOREIGN_KEY_CHECKS = 0;
+-- BCrypt hash for Password@123
+INSERT INTO
+    roles (id, name)
+VALUES
+    (1, 'ADMIN'),
+    (2, 'LIBRARIAN'),
+    (3, 'USER');
 
-DROP TABLE IF EXISTS borrow_items;
-
-DROP TABLE IF EXISTS borrow_records;
-
-DROP TABLE IF EXISTS inventory_logs;
-
-DROP TABLE IF EXISTS inventory;
-
-DROP TABLE IF EXISTS book_categories;
-
-DROP TABLE IF EXISTS book_authors;
-
-DROP TABLE IF EXISTS books;
-
-DROP TABLE IF EXISTS categories;
-
-DROP TABLE IF EXISTS authors;
-
-DROP TABLE IF EXISTS users;
-
-DROP TABLE IF EXISTS roles;
-
-SET
-    FOREIGN_KEY_CHECKS = 1;
-
-CREATE TABLE
-    roles (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(50) NOT NULL UNIQUE
-    );
-
-CREATE TABLE
+INSERT INTO
     users (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(150) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        full_name VARCHAR(200),
-        phone VARCHAR(50),
-        role_id BIGINT NOT NULL,
-        is_active TINYINT (1) NOT NULL DEFAULT 1,
-        created_at DATETIME,
-        updated_at DATETIME,
-        CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles (id)
+        id,
+        username,
+        email,
+        password,
+        full_name,
+        phone,
+        role_id,
+        is_active,
+        created_at,
+        updated_at
+    )
+VALUES
+    (
+        1,
+        'admin',
+        'admin@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'System Admin',
+        '0900000001',
+        1,
+        1,
+        '2026-01-01 08:00:00',
+        '2026-03-10 09:00:00'
+    ),
+    (
+        2,
+        'librarian_ha',
+        'ha@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Nguyen Thu Ha',
+        '0900000002',
+        2,
+        1,
+        '2026-01-01 08:10:00',
+        '2026-03-10 09:05:00'
+    ),
+    (
+        3,
+        'librarian_minh',
+        'minh@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Tran Quoc Minh',
+        '0900000003',
+        2,
+        1,
+        '2026-01-01 08:20:00',
+        '2026-03-10 09:10:00'
+    ),
+    (
+        4,
+        'member_an',
+        'an@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Nguyen Van An',
+        '0900000004',
+        3,
+        1,
+        '2026-01-02 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        5,
+        'member_binh',
+        'binh@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Tran Thi Binh',
+        '0900000005',
+        3,
+        1,
+        '2026-01-03 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        6,
+        'member_cuong',
+        'cuong@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Le Van Cuong',
+        '0900000006',
+        3,
+        1,
+        '2026-01-04 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        7,
+        'member_dung',
+        'dung@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Pham Thi Dung',
+        '0900000007',
+        3,
+        1,
+        '2026-01-05 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        8,
+        'member_em',
+        'em@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Hoang Van Em',
+        '0900000008',
+        3,
+        1,
+        '2026-01-06 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        9,
+        'member_giang',
+        'giang@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Vo Thi Giang',
+        '0900000009',
+        3,
+        1,
+        '2026-01-07 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        10,
+        'member_hung',
+        'hung@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Do Minh Hung',
+        '0900000010',
+        3,
+        1,
+        '2026-01-08 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        11,
+        'member_khanh',
+        'khanh@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Bui Ngoc Khanh',
+        '0900000011',
+        3,
+        1,
+        '2026-01-09 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        12,
+        'member_linh',
+        'linh@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Ngo Thu Linh',
+        '0900000012',
+        3,
+        1,
+        '2026-01-10 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        13,
+        'member_my',
+        'my@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Truong Gia My',
+        '0900000013',
+        3,
+        1,
+        '2026-01-11 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        14,
+        'member_nam',
+        'nam@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Pham Quoc Nam',
+        '0900000014',
+        3,
+        1,
+        '2026-01-12 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        15,
+        'member_oanh',
+        'oanh@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Le Thi Oanh',
+        '0900000015',
+        3,
+        1,
+        '2026-01-13 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        16,
+        'member_phuc',
+        'phuc@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Nguyen Minh Phuc',
+        '0900000016',
+        3,
+        1,
+        '2026-01-14 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        17,
+        'member_quynh',
+        'quynh@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Tran Nhu Quynh',
+        '0900000017',
+        3,
+        1,
+        '2026-01-15 10:00:00',
+        '2026-03-01 10:00:00'
+    ),
+    (
+        18,
+        'member_son',
+        'son@library.local',
+        '$2a$10$Mx7uSu9Vhwi4FzsgstL/pejgEZjQOWcZKMN8jiyFdTPwMhsvkZe5y',
+        'Vo Duc Son',
+        '0900000018',
+        3,
+        0,
+        '2026-01-16 10:00:00',
+        '2026-03-01 10:00:00'
     );
 
-CREATE TABLE
-    authors (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        biography TEXT
-    );
-
-CREATE TABLE
-    categories (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(200) NOT NULL UNIQUE,
-        description TEXT
-    );
-
-CREATE TABLE
-    books (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        isbn VARCHAR(50) UNIQUE,
-        publish_year INT,
-        language VARCHAR(50),
-        created_at DATETIME,
-        updated_at DATETIME
-    );
-
-CREATE TABLE
-    book_authors (
-        book_id BIGINT NOT NULL,
-        author_id BIGINT NOT NULL,
-        PRIMARY KEY (book_id, author_id),
-        CONSTRAINT fk_ba_book FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE,
-        CONSTRAINT fk_ba_author FOREIGN KEY (author_id) REFERENCES authors (id) ON DELETE CASCADE
-    );
-
-CREATE TABLE
-    book_categories (
-        book_id BIGINT NOT NULL,
-        -- =========================================
-        -- Library Management System
-        -- Convenience wrapper for MySQL CLI
-        -- =========================================
-
-        SOURCE schema.sql;
-        SOURCE sample-data.sql;
+INSERT INTO
+    authors (id, name, biography)
+VALUES
+    (
+        1,
+        'Robert C. Martin',
+        'Author of Clean Code and Clean Architecture, focused on software craftsmanship and maintainable systems.'
+    ),
+    (
+        2,
+        'Martin Fowler',
+        'Software architect known for Refactoring and enterprise application architecture patterns.'
+    ),
+    (
+        3,
+        'Joshua Bloch',
+        'Java expert and author of Effective Java.'
+    ),
+    (
+        4,
+        'Craig Walls',
+        'Author and educator in the Spring ecosystem.'
+    ),
+    (
+        5,
+        'Eric Evans',
+        'Popularized domain-driven design in modern software development.'
+    ),
+    (
+        6,
+        'Andrew Hunt',
+        'Co-author of The Pragmatic Programmer.'
+    ),
+    (
+        7,
+        'David Thomas',
+        'Co-author of The Pragmatic Programmer and advocate of agile practices.'
+    ),
+    (
+        8,
+        'Eric Freeman',
+        'Co-author of Head First Design Patterns.'
+    ),
+    (
+        9,
+        'Elisabeth Robson',
+        'Co-author of Head First Design Patterns.'
+    ),
+    (
+        10,
+        'To Hoai',
+        'Vietnamese author, best known for De Men Phieu Luu Ky.'
+    ),
+    (
+        11,
+        'Nguyen Nhat Anh',
+        'Vietnamese novelist known for youth and coming-of-age stories.'
+    ),
+    (
+        12,
+        'Nam Cao',
+        'Vietnamese realist writer and author of Chi Pheo.'
+    ),
+    (
+        13,
+        'Vu Trong Phung',
+        'Vietnamese satirical novelist and journalist.'
+    ),
+    (
+        14,
+        'Ngo Tat To',
+        'Vietnamese writer known for Tat Den.'
+    ),
+    (
+        15,
+        'Brian Goetz',
+        'Java concurrency specialist and key contributor to the Java platform.'
+    ),
+    (
+        16,
+        'Herbert Schildt',
+        'Technical author on Java and programming fundamentals.'
+    ),
+    (
+        17,
+        'Aditya Bhargava',
+        'Author of Grokking Algorithms.'
+    ),
+    (
+        18,
+        'Abraham Silberschatz',
+        'Database researcher and co-author of Database System Concepts.'
+    ),
+    (
+        19,
+        'Henry F. Korth',
+        'Co-author of major database textbooks.'
+    ),
+    (
+        20,
+        'S. Sudarshan',
+        'Co-author of Database System Concepts.'
+    ),
+    (
+        21,
+        'Thomas H. Cormen',
+        'Co-author of Introduction to Algorithms.'
+    ),
+    (
+        22,
+        'Erich Gamma',
+        'One of the Gang of Four authors of Design Patterns.'
+    ),
+    (
+        23,
+        'Richard Helm',
+        'One of the Gang of Four authors of Design Patterns.'
+    ),
+    (
+        24,
+        'Ralph Johnson',
+        'One of the Gang of Four authors of Design Patterns.'
+    ),
+    (
+        25,
+        'John Vlissides',
+        'One of the Gang of Four authors of Design Patterns.'
+    ),
+    (
+        26,
+        'Michael Feathers',
+        'Author of Working Effectively with Legacy Code.'
+    ),
+    (
+        27,
         'Chris Richardson',
         'Author focused on microservices and distributed systems.'
     ),
