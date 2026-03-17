@@ -18,6 +18,10 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
 
     Page<BorrowRecord> findByStatus(String status, Pageable pageable);
 
+    List<BorrowRecord> findByStatusOrderByCreatedAtAsc(String status);
+
+    List<BorrowRecord> findByUser_IdOrderByCreatedAtDesc(Long userId);
+
     Page<BorrowRecord> findByUser_IdAndStatus(Long userId, String status, Pageable pageable);
 
     List<BorrowRecord> findByDueDateBeforeAndStatus(LocalDate currentDate, String status);

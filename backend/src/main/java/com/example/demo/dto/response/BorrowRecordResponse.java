@@ -21,6 +21,7 @@ public class BorrowRecordResponse {
     private LocalDate borrowDate;
     private LocalDate dueDate;
     private String status;
+    private String adminNote;
     private LocalDateTime createdAt;
 
     public static BorrowRecordResponse fromEntity(BorrowRecord borrowRecord) {
@@ -34,6 +35,7 @@ public class BorrowRecordResponse {
                 .borrowDate(borrowRecord.getBorrowDate())
                 .dueDate(borrowRecord.getDueDate())
                 .status(borrowRecord.getStatus())
+                .adminNote(borrowRecord.getAdminNote())
                 .createdAt(borrowRecord.getCreatedAt())
                 .build();
     }

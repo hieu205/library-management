@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.dto.request.AdminBorrowRequest;
 import com.example.demo.dto.request.BorrowRequest;
 import com.example.demo.dto.request.ReturnRequest;
 import com.example.demo.dto.response.BorrowItemResponse;
@@ -35,7 +36,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BorrowService {
 
+    private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_BORROWING = "BORROWING";
+    private static final String STATUS_REJECTED = "REJECTED";
+    private static final String STATUS_RETURNED = "RETURNED";
     private static final int DEFAULT_BORROW_DAYS = 14;
 
     private final BorrowRecordRepository borrowRecordRepository;
@@ -46,25 +50,73 @@ public class BorrowService {
     private final UserRepository userRepository;
 
     @Transactional
-    public BorrowResponse createBorrow(BorrowRequest request) {
-        // Lấy user hiện tại từ SecurityContext
+    public BorrowResponse createBorrowRequest(BorrowRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // Cần phải check lại user có tồn tại hay không vì
-        // - user login lúc 10h
-        // - admin xóa user này lúc 10h5p
-        // - user vẫn gửi request (Security context chỉ lưu username đã đăng nhập trước
-        // đó)
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
+
+        if (!user.isActive()) {
+            throw new RuntimeException("Tài khoản đã bị khóa, không thể tạo đơn mượn");
+        }
 
         LocalDate borrowDate = LocalDate.now();
         LocalDate dueDate = request.getDueDate() != null
                 ? request.getDueDate()
                 : borrowDate.plusDays(DEFAULT_BORROW_DAYS);
 
-        // Validate tất cả sách tồn tại và đủ tồn kho trước khi thay đổi bất kỳ dữ
-        // liệu nào
+        List<Book> books = new ArrayList<>();
+        for (BorrowRequest.BorrowItemLine itemLine : request.getItems()) {
+            Book book = bookRepository.findById(itemLine.getBookId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Không tìm thấy sách với id: " + itemLine.getBookId()));
+            books.add(book);
+        }
+
+        BorrowRecord borrowRecord = new BorrowRecord();
+        borrowRecord.setUser(user);
+        borrowRecord.setBorrowDate(borrowDate);
+        borrowRecord.setDueDate(dueDate);
+        borrowRecord.setStatus(STATUS_PENDING);
+        borrowRecord.setCreatedAt(LocalDateTime.now());
+        borrowRecord = borrowRecordRepository.save(borrowRecord);
+
+        List<BorrowItem> savedItems = new ArrayList<>();
+        for (int i = 0; i < request.getItems().size(); i++) {
+            BorrowRequest.BorrowItemLine itemLine = request.getItems().get(i);
+            BorrowItem borrowItem = new BorrowItem();
+            borrowItem.setBorrowRecord(borrowRecord);
+            borrowItem.setBook(books.get(i));
+            borrowItem.setQuantity(itemLine.getQuantity());
+            borrowItem.setReturnedQuantity(0);
+            savedItems.add(borrowItemRepository.save(borrowItem));
+        }
+
+        List<BorrowItemResponse> itemResponses = new ArrayList<>();
+        for (BorrowItem item : savedItems) {
+            itemResponses.add(BorrowItemResponse.fromEntity(item));
+        }
+
+        return BorrowResponse.builder()
+                .record(BorrowRecordResponse.fromEntity(borrowRecord))
+                .items(itemResponses)
+                .build();
+    }
+
+    @Transactional
+    public BorrowResponse createBorrowByAdmin(AdminBorrowRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + request.getUserId()));
+
+        if (!user.isActive()) {
+            throw new RuntimeException("Tài khoản người dùng đã bị khóa, không thể tạo phiếu mượn");
+        }
+
+        LocalDate borrowDate = LocalDate.now();
+        LocalDate dueDate = request.getDueDate() != null
+                ? request.getDueDate()
+                : borrowDate.plusDays(DEFAULT_BORROW_DAYS);
+
         List<Book> books = new ArrayList<>();
         List<Inventory> inventories = new ArrayList<>();
         for (BorrowRequest.BorrowItemLine itemLine : request.getItems()) {
@@ -87,16 +139,15 @@ public class BorrowService {
             inventories.add(inventory);
         }
 
-        // Tạo borrow_record
         BorrowRecord borrowRecord = new BorrowRecord();
         borrowRecord.setUser(user);
         borrowRecord.setBorrowDate(borrowDate);
         borrowRecord.setDueDate(dueDate);
         borrowRecord.setStatus(STATUS_BORROWING);
+        borrowRecord.setAdminNote(request.getAdminNote());
         borrowRecord.setCreatedAt(LocalDateTime.now());
         borrowRecord = borrowRecordRepository.save(borrowRecord);
 
-        // Tạo borrow_items
         List<BorrowItem> savedItems = new ArrayList<>();
         for (int i = 0; i < request.getItems().size(); i++) {
             BorrowRequest.BorrowItemLine itemLine = request.getItems().get(i);
@@ -108,23 +159,13 @@ public class BorrowService {
             savedItems.add(borrowItemRepository.save(borrowItem));
         }
 
-        List<BorrowItemResponse> itemResponses = new ArrayList<>();
-        for (BorrowItem item : savedItems) {
-            itemResponses.add(BorrowItemResponse.fromEntity(item));
-        }
-
-        // Trừ tồn kho và ghi log xuất kho cho từng sách đã mượn
         for (int i = 0; i < request.getItems().size(); i++) {
             BorrowRequest.BorrowItemLine itemLine = request.getItems().get(i);
             Inventory inventory = inventories.get(i);
 
             int newAvailable = inventory.getAvailableQuantity() - itemLine.getQuantity();
-            if (newAvailable < 0) {
-                throw new RuntimeException(
-                        "Sách \"" + books.get(i).getTitle() + "\" không đủ tồn kho tại thời điểm ghi nhận mượn");
-            }
-
             inventory.setAvailableQuantity(newAvailable);
+            inventory.setChangeType(Inventory.EXPORT);
             inventory.setUpdatedAt(LocalDateTime.now());
             inventoryRepository.save(inventory);
 
@@ -134,10 +175,102 @@ public class BorrowService {
                     .quantityChanged(-itemLine.getQuantity())
                     .totalAfter(inventory.getTotalQuantity())
                     .availableAfter(newAvailable)
-                    .note("Mượn sách - phiếu mượn id: " + borrowRecord.getId())
+                    .note("Admin tạo phiếu mượn trực tiếp id: " + borrowRecord.getId())
                     .createdAt(LocalDateTime.now())
                     .build());
         }
+
+        List<BorrowItemResponse> itemResponses = savedItems.stream()
+                .map(BorrowItemResponse::fromEntity)
+                .toList();
+
+        return BorrowResponse.builder()
+                .record(BorrowRecordResponse.fromEntity(borrowRecord))
+                .items(itemResponses)
+                .build();
+    }
+
+    @Transactional
+    public BorrowResponse approveBorrow(Long id, String adminNote) {
+        BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với id: " + id));
+
+        if (!STATUS_PENDING.equals(borrowRecord.getStatus())) {
+            throw new RuntimeException("Chỉ có thể duyệt phiếu ở trạng thái PENDING");
+        }
+
+        if (!borrowRecord.getUser().isActive()) {
+            throw new RuntimeException("Người dùng đã bị khóa, không thể duyệt phiếu mượn");
+        }
+
+        List<BorrowItem> items = borrowItemRepository.findByBorrowRecord_Id(id);
+        List<Inventory> inventories = new ArrayList<>();
+
+        for (BorrowItem item : items) {
+            Inventory inventory = inventoryRepository.findByBook_Id(item.getBook().getId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Không tìm thấy tồn kho cho sách id: " + item.getBook().getId()));
+
+            if (inventory.getAvailableQuantity() < item.getQuantity()) {
+                throw new RuntimeException(
+                        "Sách \"" + item.getBook().getTitle() + "\" không đủ tồn kho để duyệt (còn "
+                                + inventory.getAvailableQuantity() + " cuốn, yêu cầu "
+                                + item.getQuantity() + ")");
+            }
+
+            inventories.add(inventory);
+        }
+
+        for (int i = 0; i < items.size(); i++) {
+            BorrowItem item = items.get(i);
+            Inventory inventory = inventories.get(i);
+            int newAvailable = inventory.getAvailableQuantity() - item.getQuantity();
+
+            inventory.setAvailableQuantity(newAvailable);
+            inventory.setChangeType(Inventory.EXPORT);
+            inventory.setUpdatedAt(LocalDateTime.now());
+            inventoryRepository.save(inventory);
+
+            inventoryLogRepository.save(InventoryLog.builder()
+                    .book(item.getBook())
+                    .changeType(InventoryLog.EXPORT)
+                    .quantityChanged(-item.getQuantity())
+                    .totalAfter(inventory.getTotalQuantity())
+                    .availableAfter(newAvailable)
+                    .note("Admin duyệt phiếu mượn id: " + borrowRecord.getId())
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
+
+        borrowRecord.setStatus(STATUS_BORROWING);
+        borrowRecord.setAdminNote(adminNote);
+        borrowRecordRepository.save(borrowRecord);
+
+        List<BorrowItemResponse> itemResponses = items.stream().map(BorrowItemResponse::fromEntity).toList();
+
+        return BorrowResponse.builder()
+                .record(BorrowRecordResponse.fromEntity(borrowRecord))
+                .items(itemResponses)
+                .build();
+    }
+
+    @Transactional
+    public BorrowResponse rejectBorrow(Long id, String adminNote) {
+        BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với id: " + id));
+
+        if (!STATUS_PENDING.equals(borrowRecord.getStatus())) {
+            throw new RuntimeException("Chỉ có thể từ chối phiếu ở trạng thái PENDING");
+        }
+
+        borrowRecord.setStatus(STATUS_REJECTED);
+        borrowRecord.setAdminNote(adminNote);
+        borrowRecordRepository.save(borrowRecord);
+
+        List<BorrowItemResponse> itemResponses = borrowItemRepository.findByBorrowRecord_Id(id)
+                .stream()
+                .map(BorrowItemResponse::fromEntity)
+                .toList();
 
         return BorrowResponse.builder()
                 .record(BorrowRecordResponse.fromEntity(borrowRecord))
@@ -147,16 +280,17 @@ public class BorrowService {
 
     @Transactional
     public BorrowResponse returnBorrow(Long id, ReturnRequest returnRequest) {
-        // Tìm phiếu mượn
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với id: " + id));
 
-        // Không cho trả nếu phiếu đã RETURNED
-        if ("RETURNED".equals(borrowRecord.getStatus())) {
+        if (STATUS_RETURNED.equals(borrowRecord.getStatus())) {
             throw new RuntimeException("Phiếu mượn id " + id + " đã được trả hết");
         }
 
-        // Validate dữ liệu trước khi ghi vào DB
+        if (!STATUS_BORROWING.equals(borrowRecord.getStatus())) {
+            throw new RuntimeException("Phiếu mượn chưa được duyệt hoặc đã bị từ chối");
+        }
+
         for (ReturnRequest.ReturnItemLine x : returnRequest.getItems()) {
             BorrowItem borrowItem = borrowItemRepository
                     .findByBorrowRecord_IdAndBook_Id(id, x.getBookId())
@@ -172,7 +306,6 @@ public class BorrowService {
 
         List<BorrowItem> updatedItems = new ArrayList<>();
         for (ReturnRequest.ReturnItemLine x : returnRequest.getItems()) {
-            // Cập nhật returned_quantity
             BorrowItem borrowItem = borrowItemRepository
                     .findByBorrowRecord_IdAndBook_Id(id, x.getBookId())
                     .orElseThrow();
@@ -180,7 +313,6 @@ public class BorrowService {
             borrowItemRepository.save(borrowItem);
             updatedItems.add(borrowItem);
 
-            // Tăng available_quantity trong inventory
             Inventory inventory = inventoryRepository.findByBook_Id(x.getBookId())
                     .orElseThrow(() -> new RuntimeException(
                             "Không tìm thấy tồn kho cho sách id: " + x.getBookId()));
@@ -190,7 +322,6 @@ public class BorrowService {
             inventory.setUpdatedAt(LocalDateTime.now());
             inventoryRepository.save(inventory);
 
-            // Ghi inventory_log loại RETURN
             inventoryLogRepository.save(InventoryLog.builder()
                     .book(borrowItem.getBook())
                     .changeType("RETURN")
@@ -202,12 +333,11 @@ public class BorrowService {
                     .build());
         }
 
-        // Kiểm tra nếu tất cả items đã trả đủ -> chuyển status thành RETURNED
         List<BorrowItem> allItems = borrowItemRepository.findByBorrowRecord_Id(id);
         boolean allReturned = allItems.stream()
                 .allMatch(item -> item.getReturnedQuantity().equals(item.getQuantity()));
         if (allReturned) {
-            borrowRecord.setStatus("RETURNED");
+            borrowRecord.setStatus(STATUS_RETURNED);
             borrowRecordRepository.save(borrowRecord);
         }
 
@@ -220,6 +350,41 @@ public class BorrowService {
                 .record(BorrowRecordResponse.fromEntity(borrowRecord))
                 .items(itemResponses)
                 .build();
+    }
+
+    public List<BorrowResponse> getPendingBorrowRequests() {
+        return borrowRecordRepository.findByStatusOrderByCreatedAtAsc(STATUS_PENDING)
+                .stream()
+                .map(record -> {
+                    List<BorrowItemResponse> itemResponses = borrowItemRepository.findByBorrowRecord_Id(record.getId())
+                            .stream()
+                            .map(BorrowItemResponse::fromEntity)
+                            .toList();
+                    return BorrowResponse.builder()
+                            .record(BorrowRecordResponse.fromEntity(record))
+                            .items(itemResponses)
+                            .build();
+                })
+                .toList();
+    }
+
+    public List<BorrowResponse> getMyBorrowRequests(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
+
+        return borrowRecordRepository.findByUser_IdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(record -> {
+                    List<BorrowItemResponse> itemResponses = borrowItemRepository.findByBorrowRecord_Id(record.getId())
+                            .stream()
+                            .map(BorrowItemResponse::fromEntity)
+                            .toList();
+                    return BorrowResponse.builder()
+                            .record(BorrowRecordResponse.fromEntity(record))
+                            .items(itemResponses)
+                            .build();
+                })
+                .toList();
     }
 
     public List<BorrowResponse> getAllBorrow() {

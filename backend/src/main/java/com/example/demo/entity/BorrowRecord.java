@@ -41,6 +41,9 @@ public class BorrowRecord {
     @Column(length = 20)
     private String status;
 
+    @Column(name = "admin_note", length = 500)
+    private String adminNote;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
