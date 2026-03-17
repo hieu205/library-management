@@ -33,6 +33,7 @@ public class AuthorController {
     @PostMapping
     public ResponseEntity<ApiResponse<AuthorResponse>> createAuthor(
             @Valid @RequestBody AuthorRequest authorRequest) {
+        System.out.println("[BACKEND] API tạo tác giả - name=" + authorRequest.getName());
         AuthorResponse data = authorService.createAuthor(authorRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<AuthorResponse>builder()
                 .success(true)
@@ -43,6 +44,7 @@ public class AuthorController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AuthorResponse>>> getAllAuthors() {
+        System.out.println("[BACKEND] API lấy toàn bộ danh sách tác giả");
         List<AuthorResponse> data = authorService.getAllAuthors();
         return ResponseEntity.ok(ApiResponse.<List<AuthorResponse>>builder()
                 .success(true)
@@ -53,6 +55,7 @@ public class AuthorController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthorResponse>> getAuthorById(@PathVariable Long id) {
+        System.out.println("[BACKEND] API lấy tác giả theo id - authorId=" + id);
         AuthorResponse data = authorService.getAuthorById(id);
         return ResponseEntity.ok(ApiResponse.<AuthorResponse>builder()
                 .success(true)
@@ -65,6 +68,7 @@ public class AuthorController {
     public ResponseEntity<ApiResponse<AuthorResponse>> updateAuthor(
             @PathVariable Long id,
             @Valid @RequestBody AuthorRequest request) {
+        System.out.println("[BACKEND] API cập nhật tác giả - authorId=" + id);
         AuthorResponse data = authorService.updateAuthor(id, request);
         return ResponseEntity.ok(ApiResponse.<AuthorResponse>builder()
                 .success(true)
@@ -75,6 +79,7 @@ public class AuthorController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteAuthor(@PathVariable Long id) {
+        System.out.println("[BACKEND] API xóa tác giả - authorId=" + id);
         authorService.deleteAuthor(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
@@ -85,6 +90,7 @@ public class AuthorController {
     // lấy danh sách sách theo tác giả
     @GetMapping("/{id}/books")
     public ResponseEntity<ApiResponse<List<BookResponse>>> getBooksByAuthor(@PathVariable Long id) {
+        System.out.println("[BACKEND] API lấy sách theo tác giả - authorId=" + id);
         List<BookResponse> data = bookService.getBooksByAuthorId(id);
         return ResponseEntity.ok(ApiResponse.<List<BookResponse>>builder()
                 .success(true)

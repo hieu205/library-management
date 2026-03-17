@@ -8,25 +8,28 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const credentials = localStorage.getItem('credentials');
+        const accessToken = localStorage.getItem('accessToken');
         const savedUser = localStorage.getItem('user');
-        if (credentials && savedUser) {
+        if (accessToken && savedUser) {
             setUser(JSON.parse(savedUser));
         }
         setLoading(false);
     }, []);
 
     const login = async (username, password) => {
-        const credentials = btoa(`${username}:${password}`);
         try {
             const res = await authService.login({ username, password });
-            const userData = res.data.data;
-            localStorage.setItem('credentials', credentials);
+            const authData = res.data.data;
+            const userData = authData.user;
+
+            localStorage.setItem('accessToken', authData.accessToken);
+            localStorage.setItem('refreshToken', authData.refreshToken);
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
             return userData;
         } catch (err) {
-            localStorage.removeItem('credentials');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             throw err;
         }
     };
@@ -36,9 +39,16 @@ export function AuthProvider({ children }) {
         return res.data.data;
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            await authService.logout({ refreshToken });
+        } catch {
+            // ignore logout errors and still clear client state
+        }
         setUser(null);
-        localStorage.removeItem('credentials');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
     };
 
@@ -55,7 +65,7 @@ export function AuthProvider({ children }) {
 
     const role = user?.role || null;
     const isAdmin = role === 'ADMIN';
-    const isLibrarian = role === 'LIBRARIAN';
+    const isLibrarian = false;
     const isMember = role === 'USER';
 
     return (

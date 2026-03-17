@@ -16,6 +16,8 @@ public class GlobalException {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        System.err.println("[BACKEND] Dữ liệu request không hợp lệ - soLoi="
+                + ex.getBindingResult().getFieldErrors().size());
         Map<String, String> details = new LinkedHashMap<>();
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             details.put(fieldError.getField(), fieldError.getDefaultMessage());
@@ -32,6 +34,8 @@ public class GlobalException {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
+        System.err.println("[BACKEND] Lỗi hệ thống backend - " + ex.getMessage());
+        ex.printStackTrace();
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());

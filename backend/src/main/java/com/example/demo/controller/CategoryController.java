@@ -30,6 +30,7 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
             @Valid @RequestBody CategoryRequest categoryRequest) {
+        System.out.println("[BACKEND] API tạo thể loại - name=" + categoryRequest.getName());
         CategoryResponse data = categoryService.createCategory(categoryRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<CategoryResponse>builder()
                 .success(true)
@@ -40,6 +41,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories() {
+        System.out.println("[BACKEND] API lấy toàn bộ danh sách thể loại");
         List<CategoryResponse> data = categoryService.getAllCategories();
         return ResponseEntity.ok(ApiResponse.<List<CategoryResponse>>builder()
                 .success(true)
@@ -50,6 +52,7 @@ public class CategoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable Long id) {
+        System.out.println("[BACKEND] API lấy thể loại theo id - categoryId=" + id);
         CategoryResponse data = categoryService.getCategoryById(id);
         return ResponseEntity.ok(ApiResponse.<CategoryResponse>builder()
                 .success(true)
@@ -62,6 +65,7 @@ public class CategoryController {
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest request) {
+        System.out.println("[BACKEND] API cập nhật thể loại - categoryId=" + id);
         CategoryResponse data = categoryService.updateCategory(id, request);
         return ResponseEntity.ok(ApiResponse.<CategoryResponse>builder()
                 .success(true)
@@ -72,6 +76,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable Long id) {
+        System.out.println("[BACKEND] API xóa thể loại - categoryId=" + id);
         categoryService.deleteCategory(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)

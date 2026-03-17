@@ -26,6 +26,7 @@ public class ReportController {
     @GetMapping("/top-books")
     public ResponseEntity<ApiResponse<List<TopBookReportResponse>>> getTopBooks(
             @RequestParam(defaultValue = "10") int limit) {
+        System.out.println("[BACKEND] API báo cáo top sách - limit=" + limit);
         List<TopBookReportResponse> data = reportService.getTopBooks(limit);
         return ResponseEntity.ok(ApiResponse.<List<TopBookReportResponse>>builder()
                 .success(true)
@@ -37,6 +38,7 @@ public class ReportController {
     @GetMapping("/top-users")
     public ResponseEntity<ApiResponse<List<TopUserReportResponse>>> getTopUsers(
             @RequestParam(defaultValue = "10") int limit) {
+        System.out.println("[BACKEND] API báo cáo top người dùng - limit=" + limit);
         List<TopUserReportResponse> data = reportService.getTopUsers(limit);
         return ResponseEntity.ok(ApiResponse.<List<TopUserReportResponse>>builder()
                 .success(true)
@@ -47,6 +49,7 @@ public class ReportController {
 
     @GetMapping("/borrowing-books")
     public ResponseEntity<ApiResponse<List<BorrowingBookReportResponse>>> getBorrowingBooks() {
+        System.out.println("[BACKEND] API báo cáo sách đang được mượn");
         List<BorrowingBookReportResponse> data = reportService.getBorrowingBooks();
         return ResponseEntity.ok(ApiResponse.<List<BorrowingBookReportResponse>>builder()
                 .success(true)
@@ -57,6 +60,7 @@ public class ReportController {
 
     @GetMapping("/overdue-books")
     public ResponseEntity<ApiResponse<List<OverdueRecordReportResponse>>> getOverdueBooks() {
+        System.out.println("[BACKEND] API báo cáo phiếu mượn quá hạn");
         List<OverdueRecordReportResponse> data = reportService.getOverdueRecords();
         return ResponseEntity.ok(ApiResponse.<List<OverdueRecordReportResponse>>builder()
                 .success(true)

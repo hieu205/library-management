@@ -33,6 +33,8 @@ public class InventoryController {
         @PostMapping("/add")
         public ResponseEntity<ApiResponse<InventoryResponse>> addInventory(
                         @Valid @RequestBody InventoryRequest request) {
+                System.out.println("[BACKEND] API nhập kho - bookId=" + request.getBookId() + ", quantity="
+                                + request.getQuantity());
                 InventoryResponse data = inventoryService.addInventory(request);
                 return ResponseEntity.ok(ApiResponse.<InventoryResponse>builder()
                                 .success(true)
@@ -45,6 +47,8 @@ public class InventoryController {
         @PatchMapping("/decrease")
         public ResponseEntity<ApiResponse<InventoryResponse>> decreaseInventory(
                         @Valid @RequestBody InventoryRequest request) {
+                System.out.println("[BACKEND] API xuất kho - bookId=" + request.getBookId() + ", quantity="
+                                + request.getQuantity());
                 InventoryResponse data = inventoryService.decreaseInventory(request);
                 return ResponseEntity.ok(ApiResponse.<InventoryResponse>builder()
                                 .success(true)
@@ -57,6 +61,8 @@ public class InventoryController {
         @PatchMapping("/increase")
         public ResponseEntity<ApiResponse<InventoryResponse>> increaseInventory(
                         @Valid @RequestBody InventoryRequest request) {
+                System.out.println("[BACKEND] API tăng tồn kho - bookId=" + request.getBookId() + ", quantity="
+                                + request.getQuantity());
                 InventoryResponse data = inventoryService.increaseInventory(request);
                 return ResponseEntity.ok(ApiResponse.<InventoryResponse>builder()
                                 .success(true)
@@ -68,6 +74,7 @@ public class InventoryController {
         // Lấy về all list inventory book
         @GetMapping()
         public ResponseEntity<ApiResponse<List<InventoryResponse>>> getAllInventory() {
+                System.out.println("[BACKEND] API lấy toàn bộ tồn kho");
                 List<InventoryResponse> listInventoryResponses = inventoryService.getAllInventory();
 
                 ApiResponse<List<InventoryResponse>> apiResponse = ApiResponse.<List<InventoryResponse>>builder()
@@ -82,6 +89,7 @@ public class InventoryController {
         // lấy inventory theo BookId
         @GetMapping("/{bookId}")
         public ResponseEntity<ApiResponse<InventoryResponse>> getInventoryByBookId(@PathVariable Long bookId) {
+                System.out.println("[BACKEND] API lấy tồn kho theo bookId=" + bookId);
                 InventoryResponse inventoryResponse = inventoryService.getInventoryByBookId(bookId);
                 ApiResponse<InventoryResponse> apiResponse = ApiResponse.<InventoryResponse>builder()
                                 .success(true)
@@ -95,6 +103,7 @@ public class InventoryController {
         // lấy về lịch sử nhập/xuất kho của tất cả book
         @GetMapping("/logs")
         public ResponseEntity<ApiResponse<List<InventoryLogResponse>>> getAllInventoryLog() {
+                System.out.println("[BACKEND] API lấy lịch sử nhập xuất kho");
                 List<InventoryLogResponse> inventoryLogResponses = inventoryService.getAllInventoryLog();
                 ApiResponse<List<InventoryLogResponse>> apiResponse = ApiResponse.<List<InventoryLogResponse>>builder()
                                 .success(true)
@@ -110,6 +119,7 @@ public class InventoryController {
         @GetMapping("/logs/{bookId}")
         public ResponseEntity<ApiResponse<List<InventoryLogResponse>>> getAllInventoryLogByBookId(
                         @PathVariable Long id) {
+                System.out.println("[BACKEND] API lấy lịch sử nhập xuất kho theo bookId=" + id);
                 List<InventoryLogResponse> inventoryLogResponses = inventoryService.getAllInventoryLogByBookId(id);
                 ApiResponse<List<InventoryLogResponse>> apiResponse = ApiResponse.<List<InventoryLogResponse>>builder()
                                 .success(true)

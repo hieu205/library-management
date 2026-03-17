@@ -33,7 +33,9 @@ public class UserService implements UserDetailsService {
     private final BorrowRecordRepository borrowRecordRepository;
 
     public UserResponse register(UserRequest userRequest) {
+        System.out.println("[BACKEND] Bắt đầu đăng ký người dùng - username=" + userRequest.getUsername());
         if (userRepository.existsByEmail(userRequest.getEmail())) {
+            System.err.println("[BACKEND] Đăng ký thất bại do email đã tồn tại - email=" + userRequest.getEmail());
             throw new RuntimeException("Email đã tồn tại");
         }
         if (userRepository.existsByUsername((userRequest.getUsername()))) {
@@ -58,18 +60,27 @@ public class UserService implements UserDetailsService {
                 .updatedAt(LocalDateTime.now())
                 .build();
         userRepository.save(user);
+        System.out.println("[BACKEND] Đăng ký người dùng thành công - userId=" + user.getId() + ", username="
+                + user.getUsername());
         return UserResponse.fromEntity(user);
     }
 
     public UserResponse login(LoginRequest loginRequest) {
+        System.out.println("[BACKEND] Bắt đầu đăng nhập - username=" + loginRequest.getUsername());
         User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new RuntimeException("Tên đăng nhập không đúng"));
         if (!user.isActive()) {
+            System.err.println(
+                    "[BACKEND] Đăng nhập thất bại do tài khoản bị khóa - username=" + loginRequest.getUsername());
             throw new RuntimeException("Tài khoản đã bị khóa");
         }
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            System.err.println(
+                    "[BACKEND] Đăng nhập thất bại do sai mật khẩu - username=" + loginRequest.getUsername());
             throw new RuntimeException("Sai mật khẩu");
         }
+        System.out.println("[BACKEND] Đăng nhập thành công - userId=" + user.getId() + ", username="
+                + user.getUsername());
         return UserResponse.fromEntity(user);
     }
 
@@ -196,23 +207,30 @@ public class UserService implements UserDetailsService {
     }
 
     public void changePassword(String username, ChangePasswordRequest request) {
+        System.out.println("[BACKEND] Bắt đầu đổi mật khẩu - username=" + username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            System.err.println(
+                    "[BACKEND] Đổi mật khẩu thất bại do mật khẩu hiện tại không đúng - username=" + username);
             throw new RuntimeException("Mật khẩu hiện tại không đúng");
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+        System.out.println("[BACKEND] Đổi mật khẩu thành công - username=" + username);
     }
 
     public void deleteUserById(Long id) {
+        System.out.println("[BACKEND] Bắt đầu xóa người dùng - userId=" + id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
         if (borrowRecordRepository.existsByUser_Id(id)) {
+            System.err.println("[BACKEND] Không thể xóa user vì đã có lịch sử mượn sách - userId=" + id);
             throw new RuntimeException("Không thể xóa user vì đã có lịch sử mượn sách");
         }
         userRepository.delete(user);
+        System.out.println("[BACKEND] Xóa người dùng thành công - userId=" + id);
     }
 
     public List<UserResponse> getAllUser() {

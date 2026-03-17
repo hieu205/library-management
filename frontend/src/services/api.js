@@ -9,20 +9,66 @@ const api = axios.create({
     },
 });
 
-// Add auth header to every request
+// Add Bearer token to every request
 api.interceptors.request.use((config) => {
-    const credentials = localStorage.getItem('credentials');
+    const accessToken = localStorage.getItem('accessToken');
     const url = config.url || '';
-    const isAuthEndpoint = url.includes('/users/login') || url.includes('/users/register');
-    if (credentials && !isAuthEndpoint) {
-        config.headers.Authorization = `Basic ${credentials}`;
+    const isAuthEndpoint = url.includes('/users/login') || url.includes('/users/refresh') || url.includes('/users/register');
+    if (accessToken && !isAuthEndpoint) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        const status = error.response?.status;
+        const url = originalRequest?.url || '';
+
+        if (status !== 401 || originalRequest?._retry || url.includes('/users/login') || url.includes('/users/refresh')) {
+            return Promise.reject(error);
+        }
+
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+            return Promise.reject(error);
+        }
+
+        try {
+            originalRequest._retry = true;
+            const refreshRes = await api.post('/users/refresh', { refreshToken });
+            const authData = refreshRes.data?.data;
+
+            if (!authData?.accessToken) {
+                throw new Error('Không làm mới được access token');
+            }
+
+            localStorage.setItem('accessToken', authData.accessToken);
+            if (authData.refreshToken) {
+                localStorage.setItem('refreshToken', authData.refreshToken);
+            }
+            if (authData.user) {
+                localStorage.setItem('user', JSON.stringify(authData.user));
+            }
+
+            originalRequest.headers.Authorization = `Bearer ${authData.accessToken}`;
+            return api(originalRequest);
+        } catch (refreshError) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            return Promise.reject(refreshError);
+        }
+    }
+);
+
 // ─── Auth / User ───
 export const authService = {
     login: (data) => api.post('/users/login', data),
+    refresh: (data) => api.post('/users/refresh', data),
+    logout: (data) => api.post('/users/logout', data),
     register: (data) => api.post('/users/register', data),
     getProfile: () => api.get('/users/me'),
     updateProfile: (data) => api.put('/users/me', data),

@@ -16,6 +16,8 @@ SET
 
 DROP TABLE IF EXISTS borrow_items;
 
+DROP TABLE IF EXISTS auth_tokens;
+
 DROP TABLE IF EXISTS borrow_records;
 
 DROP TABLE IF EXISTS inventory_logs;
@@ -58,6 +60,18 @@ CREATE TABLE
         created_at DATETIME,
         updated_at DATETIME,
         CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles (id)
+    );
+
+CREATE TABLE
+    auth_tokens (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        token_hash VARCHAR(128) NOT NULL UNIQUE,
+        token_type VARCHAR(20) NOT NULL,
+        revoked TINYINT (1) NOT NULL DEFAULT 0,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME NOT NULL,
+        CONSTRAINT fk_auth_token_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     );
 
 CREATE TABLE
@@ -168,3 +182,5 @@ CREATE INDEX idx_borrow_status ON borrow_records (status);
 CREATE INDEX idx_borrow_items_record ON borrow_items (borrow_record_id);
 
 CREATE INDEX idx_borrow_items_book ON borrow_items (book_id);
+
+CREATE INDEX idx_auth_tokens_user ON auth_tokens (user_id);

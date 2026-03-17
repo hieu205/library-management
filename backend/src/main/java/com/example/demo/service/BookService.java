@@ -37,8 +37,10 @@ public class BookService {
 
     @Transactional
     public BookResponse createBook(BookRequest request) {
+        System.out.println("[BACKEND] Bắt đầu tạo sách mới - title=" + request.getTitle());
         if (request.getIsbn() != null && !request.getIsbn().isBlank()
                 && bookRepository.existsByIsbn(request.getIsbn())) {
+            System.err.println("[BACKEND] Tạo sách thất bại do ISBN đã tồn tại - isbn=" + request.getIsbn());
             throw new RuntimeException("ISBN đã tồn tại");
         }
 
@@ -84,11 +86,13 @@ public class BookService {
 
         book = bookRepository.save(book);
         inventoryService.createInventoryForBook(book);
+        System.out.println("[BACKEND] Tạo sách thành công - bookId=" + book.getId() + ", title=" + book.getTitle());
         return BookResponse.fromEntity(book);
     }
 
     @Transactional
     public BookResponse updateBookById(Long id, BookRequest request) {
+        System.out.println("[BACKEND] Bắt đầu cập nhật sách - bookId=" + id);
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với id: " + id));
 
@@ -144,21 +148,25 @@ public class BookService {
         }
 
         book = bookRepository.save(book);
+        System.out.println("[BACKEND] Cập nhật sách thành công - bookId=" + id);
         return BookResponse.fromEntity(book);
     }
 
     @Transactional
     public void deleteBookById(Long id) {
+        System.out.println("[BACKEND] Bắt đầu xóa sách - bookId=" + id);
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với id: " + id));
 
         // nếu xóa sách đang được mượn đi thì lúc trả sẽ không thể biết được sách đó là
         // sách nào trong list<book> của cửa hàng
         if (borrowItemRepository.existsActiveBorrowByBookId(id)) {
+            System.err.println("[BACKEND] Không thể xóa sách vì đang được mượn - bookId=" + id);
             throw new RuntimeException("Không thể xóa sách đang được mượn");
         }
 
         bookRepository.delete(book);
+        System.out.println("[BACKEND] Xóa sách thành công - bookId=" + id);
     }
 
     public List<BookResponse> getAllBook() {

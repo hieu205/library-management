@@ -32,6 +32,8 @@ public class BorrowController {
     @PostMapping
     public ResponseEntity<ApiResponse<BorrowResponse>> createBorrow(
             @Valid @RequestBody AdminBorrowRequest request) {
+        System.out.println("[BACKEND] API tạo phiếu mượn trực tiếp - userId=" + request.getUserId()
+                + ", soLuongDauSach=" + (request.getItems() != null ? request.getItems().size() : 0));
         BorrowResponse data = borrowService.createBorrowByAdmin(request);
         return ResponseEntity.ok(ApiResponse.<BorrowResponse>builder()
                 .success(true)
@@ -43,6 +45,8 @@ public class BorrowController {
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<BorrowResponse>> createBorrowRequest(
             @Valid @RequestBody BorrowRequest request) {
+        System.out.println("[BACKEND] API gửi yêu cầu mượn online - soLuongDauSach="
+                + (request.getItems() != null ? request.getItems().size() : 0));
         BorrowResponse data = borrowService.createBorrowRequest(request);
         return ResponseEntity.ok(ApiResponse.<BorrowResponse>builder()
                 .success(true)
@@ -55,6 +59,7 @@ public class BorrowController {
     public ResponseEntity<ApiResponse<BorrowResponse>> approveBorrow(
             @PathVariable Long borrowId,
             @Valid @RequestBody(required = false) BorrowDecisionRequest request) {
+        System.out.println("[BACKEND] API duyệt phiếu mượn - borrowId=" + borrowId);
         BorrowResponse data = borrowService.approveBorrow(
                 borrowId,
                 request != null ? request.getAdminNote() : null);
@@ -69,6 +74,7 @@ public class BorrowController {
     public ResponseEntity<ApiResponse<BorrowResponse>> rejectBorrow(
             @PathVariable Long borrowId,
             @Valid @RequestBody(required = false) BorrowDecisionRequest request) {
+        System.out.println("[BACKEND] API từ chối phiếu mượn - borrowId=" + borrowId);
         BorrowResponse data = borrowService.rejectBorrow(
                 borrowId,
                 request != null ? request.getAdminNote() : null);
@@ -83,6 +89,8 @@ public class BorrowController {
     public ResponseEntity<ApiResponse<BorrowResponse>> returnBorrow(
             @PathVariable Long borrowId,
             @Valid @RequestBody ReturnRequest returnRequest) {
+        System.out.println("[BACKEND] API trả sách - borrowId=" + borrowId
+                + ", soDongTra=" + (returnRequest.getItems() != null ? returnRequest.getItems().size() : 0));
         BorrowResponse data = borrowService.returnBorrow(borrowId, returnRequest);
         return ResponseEntity.ok(ApiResponse.<BorrowResponse>builder()
                 .success(true)
@@ -93,6 +101,7 @@ public class BorrowController {
 
     @GetMapping()
     public ResponseEntity<ApiResponse<List<BorrowResponse>>> getAllBorrow() {
+        System.out.println("[BACKEND] API lấy toàn bộ phiếu mượn");
         List<BorrowResponse> listBorrowResponses = borrowService.getAllBorrow();
         return ResponseEntity.ok(ApiResponse.<List<BorrowResponse>>builder()
                 .success(true)
@@ -103,6 +112,7 @@ public class BorrowController {
 
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<BorrowResponse>>> getPendingBorrowRequests() {
+        System.out.println("[BACKEND] API lấy danh sách phiếu chờ duyệt");
         List<BorrowResponse> data = borrowService.getPendingBorrowRequests();
         return ResponseEntity.ok(ApiResponse.<List<BorrowResponse>>builder()
                 .success(true)
@@ -113,6 +123,7 @@ public class BorrowController {
 
     @GetMapping("/my-requests")
     public ResponseEntity<ApiResponse<List<BorrowResponse>>> getMyRequests(Authentication authentication) {
+        System.out.println("[BACKEND] API lấy đơn mượn của người dùng - username=" + authentication.getName());
         List<BorrowResponse> data = borrowService.getMyBorrowRequests(authentication.getName());
         return ResponseEntity.ok(ApiResponse.<List<BorrowResponse>>builder()
                 .success(true)
@@ -123,6 +134,7 @@ public class BorrowController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BorrowResponse>> getBorrowById(@PathVariable Long id) {
+        System.out.println("[BACKEND] API lấy phiếu mượn theo id - borrowId=" + id);
         BorrowResponse borrowResponse = borrowService.getBorrowById(id);
         return ResponseEntity.ok(ApiResponse.<BorrowResponse>builder()
                 .success(true)

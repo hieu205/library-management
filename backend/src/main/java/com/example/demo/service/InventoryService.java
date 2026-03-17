@@ -30,6 +30,7 @@ public class InventoryService {
 
     @Transactional
     public void createInventoryForBook(Book book) {
+        System.out.println("[BACKEND] Khởi tạo tồn kho ban đầu cho sách mới - bookId=" + book.getId());
         Inventory inventory = Inventory.builder()
                 .book(book)
                 .totalQuantity(0)
@@ -43,6 +44,8 @@ public class InventoryService {
     // Nếu chưa có inventory → tạo mới. Nếu đã có → cộng thêm số lượng
     @Transactional
     public InventoryResponse addInventory(InventoryRequest request) {
+        System.out.println("[BACKEND] Bắt đầu nhập kho - bookId=" + request.getBookId() + ", quantity="
+                + request.getQuantity());
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException(
                         "Không tìm thấy sách với id: " + request.getBookId()));
@@ -78,17 +81,24 @@ public class InventoryService {
                 .createdAt(LocalDateTime.now())
                 .build());
 
+        System.out.println("[BACKEND] Nhập kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
+                + inventory.getAvailableQuantity());
+
         return InventoryResponse.fromEntity(inventory);
     }
 
     // Xuất kho: giảm available (khi người dùng mượn sách)
     @Transactional
     public InventoryResponse decreaseInventory(InventoryRequest request) {
+        System.out.println("[BACKEND] Bắt đầu xuất kho - bookId=" + request.getBookId() + ", quantity="
+                + request.getQuantity());
         Inventory inventory = inventoryRepository.findByBook_Id(request.getBookId())
                 .orElseThrow(() -> new RuntimeException(
                         "Không tìm thấy tồn kho cho sách id: " + request.getBookId()));
 
         if (inventory.getAvailableQuantity() < request.getQuantity()) {
+            System.err.println("[BACKEND] Xuất kho thất bại do không đủ số lượng - bookId=" + request.getBookId()
+                    + ", con=" + inventory.getAvailableQuantity() + ", yeuCau=" + request.getQuantity());
             throw new RuntimeException(
                     "Số lượng sách trong kho không đủ (còn "
                             + inventory.getAvailableQuantity() + " cuốn)");
@@ -110,12 +120,17 @@ public class InventoryService {
                 .createdAt(LocalDateTime.now())
                 .build());
 
+        System.out.println("[BACKEND] Xuất kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
+                + newAvailable);
+
         return InventoryResponse.fromEntity(inventory);
     }
 
     // Nhập kho: tăng available (khi người dùng trả sách)
     @Transactional
     public InventoryResponse increaseInventory(InventoryRequest request) {
+        System.out.println("[BACKEND] Bắt đầu tăng tồn kho - bookId=" + request.getBookId() + ", quantity="
+                + request.getQuantity());
         Inventory inventory = inventoryRepository.findByBook_Id(request.getBookId())
                 .orElseThrow(() -> new RuntimeException(
                         "Không tìm thấy tồn kho cho sách id: " + request.getBookId()));
@@ -135,6 +150,9 @@ public class InventoryService {
                 .note(request.getNote())
                 .createdAt(LocalDateTime.now())
                 .build());
+
+        System.out.println("[BACKEND] Tăng tồn kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
+                + newAvailable);
 
         return InventoryResponse.fromEntity(inventory);
     }

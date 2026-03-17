@@ -52,11 +52,14 @@ public class BorrowService {
     @Transactional
     public BorrowResponse createBorrowRequest(BorrowRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println("[BACKEND] Bắt đầu tạo yêu cầu mượn online - username=" + username + ", soDauSach="
+                + (request.getItems() != null ? request.getItems().size() : 0));
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
 
         if (!user.isActive()) {
+            System.err.println("[BACKEND] Không thể tạo yêu cầu mượn vì tài khoản bị khóa - username=" + username);
             throw new RuntimeException("Tài khoản đã bị khóa, không thể tạo đơn mượn");
         }
 
@@ -80,6 +83,8 @@ public class BorrowService {
         borrowRecord.setStatus(STATUS_PENDING);
         borrowRecord.setCreatedAt(LocalDateTime.now());
         borrowRecord = borrowRecordRepository.save(borrowRecord);
+        System.out.println("[BACKEND] Tạo yêu cầu mượn online thành công - borrowId=" + borrowRecord.getId()
+                + ", trangThai=" + borrowRecord.getStatus());
 
         List<BorrowItem> savedItems = new ArrayList<>();
         for (int i = 0; i < request.getItems().size(); i++) {
@@ -105,10 +110,14 @@ public class BorrowService {
 
     @Transactional
     public BorrowResponse createBorrowByAdmin(AdminBorrowRequest request) {
+        System.out.println("[BACKEND] Bắt đầu tạo phiếu mượn trực tiếp bởi admin - userId=" + request.getUserId()
+                + ", soDauSach=" + (request.getItems() != null ? request.getItems().size() : 0));
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + request.getUserId()));
 
         if (!user.isActive()) {
+            System.err.println(
+                    "[BACKEND] Không thể tạo phiếu mượn trực tiếp vì user bị khóa - userId=" + request.getUserId());
             throw new RuntimeException("Tài khoản người dùng đã bị khóa, không thể tạo phiếu mượn");
         }
 
@@ -129,6 +138,9 @@ public class BorrowService {
                             "Không tìm thấy tồn kho cho sách id: " + itemLine.getBookId()));
 
             if (inventory.getAvailableQuantity() < itemLine.getQuantity()) {
+                System.err.println("[BACKEND] Tồn kho không đủ khi tạo phiếu trực tiếp - bookId="
+                        + itemLine.getBookId() + ", con=" + inventory.getAvailableQuantity() + ", yeuCau="
+                        + itemLine.getQuantity());
                 throw new RuntimeException(
                         "Sách \"" + book.getTitle() + "\" không đủ tồn kho (còn "
                                 + inventory.getAvailableQuantity() + " cuốn, yêu cầu "
@@ -147,6 +159,8 @@ public class BorrowService {
         borrowRecord.setAdminNote(request.getAdminNote());
         borrowRecord.setCreatedAt(LocalDateTime.now());
         borrowRecord = borrowRecordRepository.save(borrowRecord);
+        System.out.println("[BACKEND] Tạo phiếu mượn trực tiếp thành công - borrowId=" + borrowRecord.getId()
+                + ", trangThai=" + borrowRecord.getStatus());
 
         List<BorrowItem> savedItems = new ArrayList<>();
         for (int i = 0; i < request.getItems().size(); i++) {
@@ -192,14 +206,19 @@ public class BorrowService {
 
     @Transactional
     public BorrowResponse approveBorrow(Long id, String adminNote) {
+        System.out.println("[BACKEND] Bắt đầu duyệt phiếu mượn - borrowId=" + id);
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với id: " + id));
 
         if (!STATUS_PENDING.equals(borrowRecord.getStatus())) {
+            System.err.println("[BACKEND] Không thể duyệt phiếu do sai trạng thái - borrowId=" + id + ", trangThai="
+                    + borrowRecord.getStatus());
             throw new RuntimeException("Chỉ có thể duyệt phiếu ở trạng thái PENDING");
         }
 
         if (!borrowRecord.getUser().isActive()) {
+            System.err.println("[BACKEND] Không thể duyệt phiếu vì user bị khóa - borrowId=" + id + ", userId="
+                    + borrowRecord.getUser().getId());
             throw new RuntimeException("Người dùng đã bị khóa, không thể duyệt phiếu mượn");
         }
 
@@ -212,6 +231,9 @@ public class BorrowService {
                             "Không tìm thấy tồn kho cho sách id: " + item.getBook().getId()));
 
             if (inventory.getAvailableQuantity() < item.getQuantity()) {
+                System.err.println("[BACKEND] Tồn kho không đủ khi duyệt phiếu - borrowId=" + id + ", bookId="
+                        + item.getBook().getId() + ", con=" + inventory.getAvailableQuantity() + ", yeuCau="
+                        + item.getQuantity());
                 throw new RuntimeException(
                         "Sách \"" + item.getBook().getTitle() + "\" không đủ tồn kho để duyệt (còn "
                                 + inventory.getAvailableQuantity() + " cuốn, yêu cầu "
@@ -245,6 +267,8 @@ public class BorrowService {
         borrowRecord.setStatus(STATUS_BORROWING);
         borrowRecord.setAdminNote(adminNote);
         borrowRecordRepository.save(borrowRecord);
+        System.out.println("[BACKEND] Duyệt phiếu mượn thành công - borrowId=" + id + ", trangThai="
+                + borrowRecord.getStatus());
 
         List<BorrowItemResponse> itemResponses = items.stream().map(BorrowItemResponse::fromEntity).toList();
 
@@ -256,16 +280,21 @@ public class BorrowService {
 
     @Transactional
     public BorrowResponse rejectBorrow(Long id, String adminNote) {
+        System.out.println("[BACKEND] Bắt đầu từ chối phiếu mượn - borrowId=" + id);
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với id: " + id));
 
         if (!STATUS_PENDING.equals(borrowRecord.getStatus())) {
+            System.err.println("[BACKEND] Không thể từ chối phiếu do sai trạng thái - borrowId=" + id
+                    + ", trangThai=" + borrowRecord.getStatus());
             throw new RuntimeException("Chỉ có thể từ chối phiếu ở trạng thái PENDING");
         }
 
         borrowRecord.setStatus(STATUS_REJECTED);
         borrowRecord.setAdminNote(adminNote);
         borrowRecordRepository.save(borrowRecord);
+        System.out.println("[BACKEND] Từ chối phiếu mượn thành công - borrowId=" + id + ", trangThai="
+                + borrowRecord.getStatus());
 
         List<BorrowItemResponse> itemResponses = borrowItemRepository.findByBorrowRecord_Id(id)
                 .stream()
@@ -280,14 +309,19 @@ public class BorrowService {
 
     @Transactional
     public BorrowResponse returnBorrow(Long id, ReturnRequest returnRequest) {
+        System.out.println("[BACKEND] Bắt đầu xử lý trả sách - borrowId=" + id + ", soDongTra="
+                + (returnRequest.getItems() != null ? returnRequest.getItems().size() : 0));
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu mượn với id: " + id));
 
         if (STATUS_RETURNED.equals(borrowRecord.getStatus())) {
+            System.err.println("[BACKEND] Phiếu mượn đã trả hết trước đó - borrowId=" + id);
             throw new RuntimeException("Phiếu mượn id " + id + " đã được trả hết");
         }
 
         if (!STATUS_BORROWING.equals(borrowRecord.getStatus())) {
+            System.err.println("[BACKEND] Không thể trả sách do trạng thái phiếu không hợp lệ - borrowId=" + id
+                    + ", trangThai=" + borrowRecord.getStatus());
             throw new RuntimeException("Phiếu mượn chưa được duyệt hoặc đã bị từ chối");
         }
 
@@ -339,6 +373,7 @@ public class BorrowService {
         if (allReturned) {
             borrowRecord.setStatus(STATUS_RETURNED);
             borrowRecordRepository.save(borrowRecord);
+            System.out.println("[BACKEND] Hoàn tất trả sách, phiếu chuyển RETURNED - borrowId=" + id);
         }
 
         List<BorrowItemResponse> itemResponses = new ArrayList<>();
@@ -353,7 +388,7 @@ public class BorrowService {
     }
 
     public List<BorrowResponse> getPendingBorrowRequests() {
-        return borrowRecordRepository.findByStatusOrderByCreatedAtAsc(STATUS_PENDING)
+        List<BorrowResponse> responses = borrowRecordRepository.findByStatusOrderByCreatedAtAsc(STATUS_PENDING)
                 .stream()
                 .map(record -> {
                     List<BorrowItemResponse> itemResponses = borrowItemRepository.findByBorrowRecord_Id(record.getId())
@@ -366,13 +401,15 @@ public class BorrowService {
                             .build();
                 })
                 .toList();
+        System.out.println("[BACKEND] Lấy danh sách phiếu chờ duyệt - tong=" + responses.size());
+        return responses;
     }
 
     public List<BorrowResponse> getMyBorrowRequests(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
 
-        return borrowRecordRepository.findByUser_IdOrderByCreatedAtDesc(user.getId())
+        List<BorrowResponse> responses = borrowRecordRepository.findByUser_IdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(record -> {
                     List<BorrowItemResponse> itemResponses = borrowItemRepository.findByBorrowRecord_Id(record.getId())
@@ -385,6 +422,9 @@ public class BorrowService {
                             .build();
                 })
                 .toList();
+        System.out.println("[BACKEND] Lấy danh sách phiếu mượn của người dùng - username=" + username + ", tong="
+                + responses.size());
+        return responses;
     }
 
     public List<BorrowResponse> getAllBorrow() {

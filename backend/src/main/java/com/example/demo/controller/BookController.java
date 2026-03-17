@@ -33,6 +33,7 @@ public class BookController {
 
         @PostMapping("")
         public ResponseEntity<ApiResponse<BookResponse>> createBook(@Valid @RequestBody BookRequest bookRequest) {
+                System.out.println("[BACKEND] API tạo sách - title=" + bookRequest.getTitle());
                 BookResponse bookResponse = bookService.createBook(bookRequest);
                 ApiResponse<BookResponse> apiResponse = ApiResponse.<BookResponse>builder()
                                 .success(true)
@@ -45,6 +46,7 @@ public class BookController {
         @PutMapping("/{id}")
         public ResponseEntity<ApiResponse<BookResponse>> updateBookById(@PathVariable Long id,
                         @Valid @RequestBody BookRequest bookRequest) {
+                System.out.println("[BACKEND] API cập nhật sách - bookId=" + id);
                 BookResponse bookResponse = bookService.updateBookById(id, bookRequest);
                 ApiResponse<BookResponse> apiResponse = ApiResponse.<BookResponse>builder()
                                 .success(true)
@@ -56,6 +58,7 @@ public class BookController {
 
         @DeleteMapping("/{id}")
         public ResponseEntity<ApiResponse<Void>> deleteBookById(@PathVariable Long id) {
+                System.out.println("[BACKEND] API xóa sách - bookId=" + id);
                 bookService.deleteBookById(id);
                 ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
                                 .success(true)
@@ -67,6 +70,7 @@ public class BookController {
 
         @GetMapping()
         public ResponseEntity<ApiResponse<List<BookResponse>>> getAllBook() {
+                System.out.println("[BACKEND] API lấy toàn bộ danh sách sách");
                 List<BookResponse> listBookResponse = bookService.getAllBook();
                 ApiResponse<List<BookResponse>> apiResponse = ApiResponse.<List<BookResponse>>builder()
                                 .success(true)
@@ -78,6 +82,7 @@ public class BookController {
 
         @GetMapping("/{id}")
         public ResponseEntity<ApiResponse<BookResponse>> getBookById(@PathVariable Long id) {
+                System.out.println("[BACKEND] API lấy sách theo id - bookId=" + id);
                 BookResponse bookResponse = bookService.getBookById(id);
                 ApiResponse<BookResponse> apiResponse = ApiResponse.<BookResponse>builder()
                                 .success(true)
@@ -92,6 +97,10 @@ public class BookController {
         @PostMapping("/{id}/authors")
         public ResponseEntity<ApiResponse<BookResponse>> addAuthorsToBook(@PathVariable Long id,
                         @Valid @RequestBody AddAuthorsToBookRequest addAuthorsToBookRequest) {
+                System.out.println("[BACKEND] API thêm tác giả cho sách - bookId=" + id + ", soTacGia="
+                                + (addAuthorsToBookRequest.getAuthorIds() != null
+                                                ? addAuthorsToBookRequest.getAuthorIds().size()
+                                                : 0));
                 BookResponse bookResponse = bookService.addAuthorsToBook(id,
                                 addAuthorsToBookRequest);
                 ApiResponse<BookResponse> apiResponse = ApiResponse.<BookResponse>builder()
@@ -105,6 +114,7 @@ public class BookController {
         // search book
         @GetMapping("/search")
         public ResponseEntity<ApiResponse<List<BookResponse>>> searchBook(@RequestParam String keyword) {
+                System.out.println("[BACKEND] API tìm kiếm sách - keyword=" + keyword);
                 List<BookResponse> bookResponses = bookService.searchBook(keyword);
                 ApiResponse<List<BookResponse>> apiResponse = ApiResponse.<List<BookResponse>>builder()
                                 .success(true)

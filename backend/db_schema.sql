@@ -14,6 +14,7 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 -- Drop tables if exist (children first)
 DROP TABLE IF EXISTS borrow_items;
 DROP TABLE IF EXISTS borrow_records;
+DROP TABLE IF EXISTS auth_tokens;
 DROP TABLE IF EXISTS book_authors;
 DROP TABLE IF EXISTS book_categories;
 DROP TABLE IF EXISTS inventory_logs;
@@ -73,6 +74,20 @@ CREATE TABLE users (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
     ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Auth tokens (refresh token store)
+CREATE TABLE auth_tokens (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  token_hash VARCHAR(128) NOT NULL UNIQUE,
+  token_type VARCHAR(20) NOT NULL,
+  revoked TINYINT(1) NOT NULL DEFAULT 0,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME NOT NULL,
+  INDEX idx_auth_tokens_user (user_id),
+  CONSTRAINT fk_auth_tokens_user FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Inventory (one-to-one with book)
