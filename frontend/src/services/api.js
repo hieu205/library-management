@@ -135,7 +135,12 @@ export const borrowService = {
     getAll: () => api.get('/borrow'),
     getById: (id) => api.get(`/borrow/${id}`),
     create: (data) => api.post('/borrow', data),
+    createRequest: (data) => api.post('/borrow/request', data),
     returnBooks: (borrowId, data) => api.post(`/borrow/${borrowId}/return`, data),
+    approve: (borrowId, data) => api.post(`/borrow/${borrowId}/approve`, data),
+    reject: (borrowId, data) => api.post(`/borrow/${borrowId}/reject`, data),
+    getPending: () => api.get('/borrow/pending'),
+    getMyRequests: () => api.get('/borrow/my-requests'),
 };
 
 // ─── Reports ───

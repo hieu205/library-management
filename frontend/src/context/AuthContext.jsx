@@ -63,9 +63,9 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const role = user?.role || null;
+    const role = typeof user?.role === 'string' ? user.role : (user?.role?.name || null);
     const isAdmin = role === 'ADMIN';
-    const isLibrarian = false;
+    const isLibrarian = role === 'LIBRARIAN';
     const isMember = role === 'USER';
 
     return (

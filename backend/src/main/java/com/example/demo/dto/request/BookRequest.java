@@ -26,7 +26,6 @@ public class BookRequest {
     private String description;
 
     @Size(max = 50, message = "ISBN không được vượt quá 50 ký tự")
-    @Pattern(regexp = "^(?:97[89][- ]?)?(?:[0-9][- ]?){9}[0-9Xx]$", message = "ISBN không đúng định dạng")
     private String isbn;
 
     @Min(value = 1450, message = "Năm xuất bản không hợp lệ")

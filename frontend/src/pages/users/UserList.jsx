@@ -60,18 +60,26 @@ export default function UserList() {
             setModalOpen(false);
             loadData();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Thao tác thất bại!');
+            const details = err.response?.data?.details;
+            const detailMessage = details
+                ? Object.values(details).join(' | ')
+                : null;
+            toast.error(detailMessage || err.response?.data?.message || 'Thao tác thất bại!');
         }
     };
 
     const toggleStatus = async (user) => {
         if (!isAdmin) return;
         try {
-            await userService.updateStatus(user.id, { active: !user.active });
+            await userService.updateStatus(user.id, { isActive: !user.active });
             toast.success(user.active ? 'Đã khóa tài khoản' : 'Đã mở khóa tài khoản');
             loadData();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Thao tác thất bại!');
+            const details = err.response?.data?.details;
+            const detailMessage = details
+                ? Object.values(details).join(' | ')
+                : null;
+            toast.error(detailMessage || err.response?.data?.message || 'Thao tác thất bại!');
         }
     };
 
