@@ -248,17 +248,15 @@ export default function BorrowList() {
             setApprovingId(borrowId);
 
             if (currentStatus === 'PENDING' && nextStatus === 'BORROWING') {
-                const note = window.prompt('Ghi chú duyệt (tùy chọn):', '') || '';
-                await borrowService.approve(borrowId, { adminNote: note });
-                toast.success('Đã cập nhật trạng thái: Đang mượn');
+                await borrowService.approve(borrowId, { adminNote: '' });
+                toast.success('Đã duyệt phiếu mượn');
                 await loadData();
                 return;
             }
 
             if (currentStatus === 'PENDING' && nextStatus === 'REJECTED') {
-                const note = window.prompt('Lý do từ chối (tùy chọn):', '') || '';
-                await borrowService.reject(borrowId, { adminNote: note });
-                toast.success('Đã cập nhật trạng thái: Bị từ chối');
+                await borrowService.reject(borrowId, { adminNote: '' });
+                toast.success('Đã từ chối phiếu mượn');
                 await loadData();
                 return;
             }
