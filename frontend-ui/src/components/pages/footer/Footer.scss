@@ -1,0 +1,47 @@
+.inner-footer {
+  margin-top: 80px;
+  padding: 30px 20px;
+  border-top: 1px solid #eee;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #000;
+    letter-spacing: 1px;
+  }
+
+  .inner-social {
+    display: flex;
+    gap: 16px;
+
+    i {
+      font-size: 20px;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      /* hiệu ứng hover */
+      &:hover {
+        transform: translateY(-4px) scale(1.2);
+      }
+
+      /* màu riêng từng icon */
+      &:nth-child(1):hover {
+        color: #1877f2; // facebook
+      }
+
+      &:nth-child(2):hover {
+        color: #e4405f; // instagram
+      }
+
+      &:nth-child(3):hover {
+        color: #555; // email
+      }
+    }
+  }
+}
