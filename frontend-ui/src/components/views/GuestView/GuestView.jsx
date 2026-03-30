@@ -3,9 +3,11 @@ import React from "react"
 import "./GuestView.scss"
 import Footer from "../../pages/footer/Footer"
 import Introduction from "../../introduction/Introduction"
+import NavbarGuestView from "../../pages/NavbarGuestView/NavbarGuestView"
 const GuestView = () => {
   return (
     <div className="container guest-view">
+      <NavbarGuestView></NavbarGuestView>
       <div className="inner-wrap-guest-view">
         <div className="inner-title">
           <h1 className="main-title">My Library</h1>

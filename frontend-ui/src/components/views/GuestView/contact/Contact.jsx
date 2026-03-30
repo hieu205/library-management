@@ -1,8 +1,11 @@
 import React from "react"
 import "./Contact.scss"
+
+import NavbarGuestView from "../../../pages/NavbarGuestView/NavbarGuestView"
 const Contact = () => {
   return (
     <div className="container">
+      <NavbarGuestView></NavbarGuestView>
       <div className="contact">
         <div className="inner-contact">
           {/* LEFT */}

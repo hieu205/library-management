@@ -5,7 +5,6 @@ const Layout = () => {
   return (
     <div className="container-fluid layout p-0">
       <div className="inner-wrap-layout">
-        <NavbarGuestView></NavbarGuestView>
         <Outlet></Outlet>
       </div>
     </div>

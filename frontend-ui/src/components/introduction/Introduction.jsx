@@ -2,11 +2,12 @@ import React from "react"
 import "./Introduction.scss"
 import image1 from "../../assets/image1.jpg"
 import image2 from "../../assets/image2.jpg"
-
+import NavbarGuestView from "../pages/NavbarGuestView/NavbarGuestView"
 import data from "./data"
 const Introduction = () => {
   return (
     <div className="container introduction">
+      <NavbarGuestView></NavbarGuestView>
       <div className="inner-wrap-introduction">
         <div className="introduction-1">
           <div className="inner-left">

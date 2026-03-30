@@ -4,6 +4,8 @@ import axios from "axios"
 import no_image from "../../../../assets/no-image.jpg"
 import { useState, useEffect } from "react"
 import "./Explore.scss"
+
+import NavbarGuestView from "../../../pages/NavbarGuestView/NavbarGuestView"
 const Explore = () => {
   const [loading, setLoading] = useState(false)
   useEffect(() => {
@@ -27,6 +29,7 @@ const Explore = () => {
   }
   return (
     <div className="container explore">
+      <NavbarGuestView></NavbarGuestView>
       <div className="inner-wrap-explore">
         <div className="inner-topic">
           <h1 className="inner-title">Library Explore</h1>
@@ -46,7 +49,7 @@ const Explore = () => {
           {books.slice(0, 20).map((book, index) => (
             <div
               key={index}
-              className="book-details"
+              className="book-details-1"
             >
               <div className="image-wrapper">
                 <img

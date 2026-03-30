@@ -22,6 +22,8 @@ import Explore from "./components/views/GuestView/explore/Explore"
 import Contact from "./components/views/GuestView/contact/Contact"
 import Register from "./components/register/Register"
 import Login from "./components/login/Login"
+import BookPage from "./components/views/BookView/BookPage/BookPage"
+import BookDetails from "./components/views/BookView/BookDetails/BookDetails"
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
@@ -53,6 +55,15 @@ const router = createBrowserRouter(
         path="register"
         element={<Register />}
       ></Route>
+      <Route
+        path="main"
+        element={<BookDetails />}
+      >
+        <Route
+          index
+          element={<BookPage />}
+        ></Route>
+      </Route>
     </Route>,
   ),
 )
