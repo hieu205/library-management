@@ -30,7 +30,13 @@ const BookPage = () => {
 
   const user = JSON.parse(localStorage.getItem("user"))
   const role = user ? user.role : "guest"
-  if (loading) return <p>Loading...</p>
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading books...</p>
+      </div>
+    )
   if (role === "admin") return <AdminView books={books} />
   if (role === "user") return <UserView books={books} />
 }
