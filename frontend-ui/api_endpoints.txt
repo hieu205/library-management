@@ -6,12 +6,12 @@ Thống kê dưới đây được tổng hợp trực tiếp từ 7 controller 
 Người dùng /api/v1/users
 Method	Path	Quyền	Mô tả
 POST	/users/register	PermitAll	Đăng ký tài khoản      ✅
-POST	/users/login	PermitAll	Đăng nhập         
-POST	/users/refresh	PermitAll	Làm mới access token/refresh token
+POST	/users/login	PermitAll	Đăng nhập         ✅
+POST	/users/refresh	PermitAll	Làm mới access token/refresh token ✅
 POST	/users/logout	Authenticated	Đăng xuất
-GET	/users/me	Authenticated	Xem profile của chính mình
-PUT	/users/me	Authenticated	Cập nhật profile
-PATCH	/users/me/password	Authenticated	Đổi mật khẩu
+GET	/users/me	Authenticated	Xem profile của chính mình   ✅
+PUT	/users/me	Authenticated	Cập nhật profile        ✅
+PATCH	/users/me/password	Authenticated	Đổi mật khẩu   ✅
 GET	/users/me/borrow-history	Authenticated	Lịch sử mượn sách của mình (paged)
 GET	/users/me/current-borrows	Authenticated	Sách đang mượn chưa trả (paged)
 POST	/users	ADMIN	Tạo user mới
@@ -36,11 +36,11 @@ GET	/authors	PermitAll	Danh sách tác giả
 GET	/authors/{id}	PermitAll	Chi tiết tác giả
 PUT	/authors/{id}	ADMIN	Cập nhật tác giả
 DELETE	/authors/{id}	ADMIN	Xóa tác giả
-GET	/authors/{id}/books	PermitAll	Danh sách sách theo tác giả
+GET	/authors/{id}/books	PermitAll	Danh sách sách theo tác giả  ✅
 Thể loại /api/v1/categories
 Method	Path	Quyền	Mô tả
-POST	/categories	ADMIN	Tạo thể loại
-GET	/categories	PermitAll	Danh sách thể loại
+POST	/categories	ADMIN	Tạo thể loại          
+GET	/categories	PermitAll	Danh sách thể loại  ✅
 GET	/categories/{id}	PermitAll	Chi tiết thể loại
 PUT	/categories/{id}	ADMIN	Cập nhật thể loại
 DELETE	/categories/{id}	ADMIN	Xóa thể loại

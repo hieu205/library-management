@@ -7,6 +7,7 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 
 import UserView from "../../UserView/UserView"
+import axiosInstance from "../../../../../utils/axiosInstance"
 const BookPage = () => {
   const [loading, setLoading] = useState(true)
   const [books, setBooks] = useState([])
@@ -16,7 +17,9 @@ const BookPage = () => {
   const loadBooks = async (e) => {
     try {
       // lấy hết book
-      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/books`)
+      const response = await axiosInstance.get(
+        `${import.meta.env.VITE_APP_URL}/books`,
+      )
 
       console.log(response.data)
 

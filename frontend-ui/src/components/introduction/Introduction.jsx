@@ -7,7 +7,6 @@ import data from "./data"
 const Introduction = () => {
   return (
     <div className="container introduction">
-      <NavbarGuestView></NavbarGuestView>
       <div className="inner-wrap-introduction">
         <div className="introduction-1">
           <div className="inner-left">

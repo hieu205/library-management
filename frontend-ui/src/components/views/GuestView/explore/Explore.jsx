@@ -4,7 +4,7 @@ import axios from "axios"
 import no_image from "../../../../assets/no-image.jpg"
 import { useState, useEffect } from "react"
 import "./Explore.scss"
-
+import axiosInstance from "../../../../../utils/axiosInstance"
 import NavbarGuestView from "../../../pages/NavbarGuestView/NavbarGuestView"
 const Explore = () => {
   const [loading, setLoading] = useState(false)
@@ -15,7 +15,9 @@ const Explore = () => {
   const loadBookListGuestView = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/books`)
+      const response = await axiosInstance.get(
+        `${import.meta.env.VITE_APP_URL}/books`,
+      )
 
       if (response.data.success) {
         console.log(response.data.data)

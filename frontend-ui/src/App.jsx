@@ -15,6 +15,7 @@ import {
 } from "react-router-dom"
 
 import "./index.css"
+import Profile from "./components/profile/Profile"
 import Layout from "./components/Layout"
 import Source from "./components/views/GuestView/source/Source"
 import GuestView from "./components/views/GuestView/GuestView"
@@ -62,6 +63,10 @@ const router = createBrowserRouter(
         <Route
           index
           element={<BookPage />}
+        ></Route>
+        <Route
+          path="profile"
+          element={<Profile />}
         ></Route>
       </Route>
     </Route>,

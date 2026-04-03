@@ -23,7 +23,15 @@ const Login = () => {
       )
 
       console.log("Login Successfully", response.data)
-      localStorage.setItem("user", JSON.stringify({ role: "admin" }))
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          role: "admin",
+          info: response.data.data,
+        }),
+      )
+      localStorage.setItem("refreshToken", response.data.data.refreshToken)
+      localStorage.setItem("accessToken", response.data.data.accessToken)
       alert("Login Successfully !!!")
       navigate("/main")
     } catch (error) {

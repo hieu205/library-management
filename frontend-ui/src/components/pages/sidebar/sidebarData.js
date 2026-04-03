@@ -1,8 +1,13 @@
 export const sidebarData = {
   admin: [
-    { name: "Dashboard", path: "/main" },
-    { name: "Manage Books", path: "/admin/books" },
-    { name: "Users", path: "/admin/users" },
+    { name: "Book Library", path: "/main" },
+    { name: "Dashboard", path: "/admin/books" },
+    { name: "Manage Book", path: "/admin/users" },
+    { name: "Author", path: "/admin/users" },
+    { name: "Type Book", path: "/admin/users" },
+    { name: "Inventory", path: "/admin/users" },
+    { name: "Borrow Book", path: "/admin/users" },
+    { name: "User", path: "/main/profile" },
   ],
   user: [
     { name: "Home", path: "/" },
@@ -10,4 +15,3 @@ export const sidebarData = {
     { name: "My Books", path: "/my-books" },
   ],
 }
-  
