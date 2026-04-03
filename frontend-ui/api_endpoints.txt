@@ -18,7 +18,7 @@ POST	/users	ADMIN	Tạo user mới
 PUT	/users/{id}	ADMIN	Cập nhật user
 PATCH	/users/{id}/status	ADMIN	Khóa/mở khóa tài khoản
 DELETE	/users/{id}	ADMIN	Xóa user
-GET	/users	ADMIN	Danh sách tất cả user
+GET	/users	ADMIN	Danh sách tất cả user      ✅ 
 GET	/users/{userId}/borrow-history	ADMIN	Lịch sử mượn của user bất kỳ
 Sách /api/v1/books
 Method	Path	Quyền	Mô tả

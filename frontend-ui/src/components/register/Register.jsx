@@ -11,7 +11,11 @@ const Register = () => {
     password: "",
     phone: "",
   })
-
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  })
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value })
   }
@@ -27,10 +31,29 @@ const Register = () => {
 
       console.log("Register Successfully", response.data)
 
-      alert("Register Successfully !!!")
-      navigate("/")
+      //  show toast
+      setToast({
+        show: true,
+        message: "Đăng ký thành công!",
+        type: "success",
+      })
+
+      setTimeout(() => {
+        navigate("/login")
+      }, 1500)
     } catch (error) {
       console.error(error.message)
+
+      //  toast lỗi
+      setToast({
+        show: true,
+        message: "Đăng ký thất bại!",
+        type: "error",
+      })
+
+      setTimeout(() => {
+        setToast((prev) => ({ ...prev, show: false }))
+      }, 2000)
     }
   }
 
@@ -119,6 +142,18 @@ const Register = () => {
           </form>
         </div>
       </div>
+      {toast.show && (
+        <div className={`custom-toast2 ${toast.type}`}>
+          <i
+            className={`fa-solid ${
+              toast.type === "success"
+                ? "fa-circle-check"
+                : "fa-circle-exclamation"
+            }`}
+          ></i>
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   )
 }

@@ -5,6 +5,11 @@ import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import NavbarGuestView from "../pages/NavbarGuestView/NavbarGuestView"
 const Login = () => {
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success", // success | error
+  })
   const [user, setUser] = useState({
     username: "",
     password: "",
@@ -22,7 +27,6 @@ const Login = () => {
         user,
       )
 
-      console.log("Login Successfully", response.data)
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -32,10 +36,30 @@ const Login = () => {
       )
       localStorage.setItem("refreshToken", response.data.data.refreshToken)
       localStorage.setItem("accessToken", response.data.data.accessToken)
-      alert("Login Successfully !!!")
-      navigate("/main")
+
+      //  toast success
+      setToast({
+        show: true,
+        message: "Login thành công!",
+        type: "success",
+      })
+
+      setTimeout(() => {
+        navigate("/main")
+      }, 1500)
     } catch (error) {
       console.error(error.message)
+
+      //  toast error
+      setToast({
+        show: true,
+        message: "Sai tài khoản hoặc mật khẩu!",
+        type: "error",
+      })
+
+      setTimeout(() => {
+        setToast({ ...toast, show: false })
+      }, 2000)
     }
   }
   return (
@@ -49,7 +73,7 @@ const Login = () => {
             onSubmit={handleSubmit}
           >
             <div className="input-group">
-              <i class="fa-solid fa-at"></i>
+              <i className="fa-solid fa-at"></i>
               <input
                 type="username"
                 required
@@ -62,7 +86,7 @@ const Login = () => {
             </div>
 
             <div className="input-group">
-              <i class="fa-solid fa-lock"></i>
+              <i className="fa-solid fa-lock"></i>
               <input
                 type="password"
                 required
@@ -87,6 +111,18 @@ const Login = () => {
           </form>
         </div>
       </div>
+      {toast.show && (
+        <div className={`custom-toast1 ${toast.type}`}>
+          <i
+            className={`fa-solid ${
+              toast.type === "success"
+                ? "fa-circle-check"
+                : "fa-circle-exclamation"
+            }`}
+          ></i>
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   )
 }

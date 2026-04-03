@@ -5,25 +5,44 @@ import { sidebarData } from "./sidebarData"
 import "./Sidebar.scss"
 import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
+import axiosInstance from "../../../../utils/axiosInstance"
 const Sidebar = ({ role }) => {
+  const [modalRoot, setModalRoot] = useState(null)
+  useEffect(() => {
+    setModalRoot(document.getElementById("modal-root"))
+  }, [])
   const navigate = useNavigate()
   const menu = sidebarData[role] || []
   const [openDropdown, setOpenDropdown] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showToast, setShowToast] = useState(false)
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     // ❗ xoá data user
-    localStorage.removeItem("user")
-    localStorage.removeItem("token")
 
-    setShowModal(false)
-    setShowToast(true)
+    try {
+      const refreshToken = localStorage.getItem("refreshToken")
+      //const accessToken = localStorage.getItem("accessToken")
+      const response = await axiosInstance.post(
+        `${import.meta.env.VITE_APP_URL}/users/logout`,
+        { refreshToken },
+      )
 
-    // delay rồi redirect
-    setTimeout(() => {
-      setShowToast(false)
-      navigate("/login")
-    }, 2000)
+      console.log("Log out Successfully")
+      localStorage.removeItem("user")
+      localStorage.removeItem("accessToken")
+      localStorage.removeItem("refreshToken")
+
+      setShowModal(false)
+      setShowToast(true)
+
+      // delay rồi redirect
+      setTimeout(() => {
+        setShowToast(false)
+        navigate("/login")
+      }, 2000)
+    } catch (error) {
+      console.error("Logout Failed", error.message)
+    }
   }
   const handleLogout = () => {
     setShowModal(true)
@@ -70,32 +89,33 @@ const Sidebar = ({ role }) => {
         </div>
         {/* ===== MODAL ===== */}
 
-        {showModal &&
-          createPortal(
-            <div className="modal-overlay">
-              <div className="modal-box">
-                <h3>Confirm Logout</h3>
-                <p>Bạn có chắc muốn đăng xuất?</p>
-                <div className="modal-actions">
-                  <button
-                    className="cancel"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Huỷ
-                  </button>
-                  <button
-                    className="confirm"
-                    onClick={confirmLogout}
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.getElementById("modal-root"),
-          )}
+        {showModal && (
+          <div className="logout-modal">
+            <h4>Confirm Logout</h4>
+            <p>Bạn có chắc muốn đăng xuất?</p>
+            <div className="actions">
+              <button
+                className="cancel"
+                onClick={() => setShowModal(false)}
+              >
+                Huỷ
+              </button>
+              <button
+                className="confirm"
+                onClick={confirmLogout}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
         {/* ===== TOAST ===== */}
-
+        {showToast && (
+          <div className="custom-toast">
+            <i className="fa-solid fa-circle-check"></i>
+            <span>Đăng xuất thành công!</span>
+          </div>
+        )}
         {/* DROPDOWN */}
       </div>
     </div>

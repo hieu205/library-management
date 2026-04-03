@@ -1,7 +1,7 @@
 export const sidebarData = {
   admin: [
     { name: "Book Library", path: "/main" },
-    { name: "Dashboard", path: "/admin/books" },
+    { name: "Dashboard", path: "/main/dashboard" },
     { name: "Manage Book", path: "/admin/users" },
     { name: "Author", path: "/admin/users" },
     { name: "Type Book", path: "/admin/users" },
