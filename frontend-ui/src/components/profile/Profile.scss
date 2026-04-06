@@ -1,0 +1,624 @@
+// ── Google Font import (put in index.html or main.scss if preferred)
+// @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+
+// ── Design tokens ──────────────────────────────────────────────
+$c-bg: #f0f4f9;
+$c-surface: #ffffff;
+$c-card: #ffffff;
+$c-border: rgba(0, 0, 0, 0.08);
+$c-accent: #3b6fd4;
+$c-accent2: #7c5cbf;
+$c-success: #16a34a;
+$c-danger: #dc2626;
+$c-text: #1a2035;
+$c-muted: #6b7694;
+$radius-card: 20px;
+$radius-sm: 10px;
+$font: "Be Vietnam Pro", "Segoe UI", sans-serif;
+
+$bp-md: 768px;
+$bp-sm: 480px;
+
+// ── Keyframes ─────────────────────────────────────────────────
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes blobPulse {
+  0%,
+  100% {
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.12) translate(10px, -12px);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes underlineGrow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+// ── Base ──────────────────────────────────────────────────────
+.profile-page {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px 80px;
+  font-family: $font;
+  position: relative;
+}
+
+// ── Background blobs ──────────────────────────────────────────
+.blob {
+  position: fixed;
+  border-radius: 50%;
+
+  animation: blobPulse 9s ease-in-out infinite;
+}
+
+// ── Card ──────────────────────────────────────────────────────
+.profile-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  background: $c-card;
+  border: 1px solid $c-border;
+  border-radius: $radius-card;
+  box-shadow:
+    0 0 0 1px rgba($c-accent, 0.08),
+    0 8px 32px rgba(59, 111, 212, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+}
+
+// ── Hero section ──────────────────────────────────────────────
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 32px 36px 28px;
+
+  border-bottom: 1px solid $c-border;
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 20px 20px;
+  }
+}
+
+.avatar-ring {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #007bff;
+  padding: 3px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-letter {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: $c-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: $c-accent;
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-name {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: $c-text;
+  letter-spacing: -0.3px;
+}
+
+.hero-email {
+  font-size: 0.85rem;
+  color: $c-muted;
+}
+
+.hero-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 12px;
+  background: rgba($c-accent, 0.15);
+  color: $c-accent;
+  border: 1px solid rgba($c-accent, 0.3);
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  width: 72%;
+}
+
+// ── Tab nav ───────────────────────────────────────────────────
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  padding: 16px 28px 0;
+  border-bottom: 1px solid $c-border;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: $bp-sm) {
+    padding: 12px 12px 0;
+    gap: 2px;
+  }
+}
+
+.tab-btn {
+  position: relative;
+  padding: 10px 20px 14px;
+  background: none;
+  border: none;
+  color: $c-muted;
+  font-family: $font;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+
+  &:hover {
+    color: $c-text;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  &.active {
+    color: $c-accent;
+    font-weight: 600;
+  }
+
+  @media (max-width: $bp-sm) {
+    padding: 8px 12px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+.tab-underline {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  height: 2px;
+  width: 80%;
+  background: #007bff;
+}
+
+// ── Tab content ───────────────────────────────────────────────
+.tab-content {
+  padding: 32px 36px;
+
+  @media (max-width: $bp-sm) {
+    padding: 20px 16px;
+  }
+}
+
+.panel {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.fade-in {
+  animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// ── Info grid ────────────────────────────────────────────────
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+  margin-bottom: 28px;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.info-item {
+  background: $c-surface;
+  border: 1px solid $c-border;
+  border-radius: $radius-sm;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: rgba($c-accent, 0.25);
+  }
+}
+
+.info-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: $c-muted;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: $c-text;
+}
+
+// ── Buttons ───────────────────────────────────────────────────
+.btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: rgba($c-accent, 0.12);
+  border: 1px solid rgba($c-accent, 0.3);
+  color: $c-accent;
+  border-radius: $radius-sm;
+  font-family: $font;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
+
+  &:hover {
+    background: rgba($c-accent, 0.22);
+    box-shadow: 0 0 16px rgba($c-accent, 0.2);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-primary {
+  padding: 11px 26px;
+  background: linear-gradient(135deg, #3b6fd4, #2d57aa);
+  border: none;
+  color: #fff;
+  border-radius: $radius-sm;
+  font-family: $font;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
+  box-shadow: 0 4px 18px rgba($c-accent, 0.3);
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba($c-accent, 0.4);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.full-width {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
+.btn-ghost {
+  padding: 11px 22px;
+  background: transparent;
+  border: 1px solid $c-border;
+  color: $c-muted;
+  border-radius: $radius-sm;
+  font-family: $font;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.18);
+    color: $c-text;
+  }
+}
+
+// ── Forms ─────────────────────────────────────────────────────
+.edit-form,
+.pw-form {
+  max-width: 460px;
+}
+
+.form-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: $c-text;
+  margin: 0 0 22px;
+  letter-spacing: -0.2px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $c-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  input {
+    background: $c-surface;
+    border: 1px solid $c-border;
+    border-radius: $radius-sm;
+    padding: 11px 14px;
+    color: $c-text;
+    font-family: $font;
+    font-size: 0.92rem;
+    outline: none;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+
+    &::placeholder {
+      color: #b0b8cc;
+    }
+
+    &:focus {
+      border-color: $c-accent;
+      box-shadow: 0 0 0 3px rgba($c-accent, 0.12);
+    }
+  }
+
+  &.has-error input {
+    border-color: $c-danger;
+    box-shadow: 0 0 0 3px rgba($c-danger, 0.1);
+  }
+}
+
+.optional {
+  font-size: 0.72rem;
+  color: $c-muted;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.err-msg {
+  font-size: 0.78rem;
+  color: $c-danger;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: slideIn 0.25s ease;
+
+  &.shake {
+    animation:
+      shake 0.4s ease,
+      slideIn 0.25s ease;
+  }
+}
+
+.success-msg {
+  background: rgba($c-success, 0.08);
+  border: 1px solid rgba($c-success, 0.25);
+  color: $c-success;
+  border-radius: $radius-sm;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+// ── Table ─────────────────────────────────────────────────────
+.table-wrap {
+  overflow-x: auto;
+  border-radius: $radius-sm;
+  border: 1px solid $c-border;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+
+    thead tr {
+      background: rgba($c-accent, 0.07);
+    }
+
+    th {
+      padding: 12px 16px;
+      color: $c-muted;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      text-align: left;
+      border-bottom: 1px solid $c-border;
+    }
+
+    td {
+      padding: 14px 16px;
+      color: $c-text;
+      border-bottom: 1px solid rgba($c-border, 0.5);
+    }
+
+    tbody tr {
+      transition: background 0.15s;
+      &:hover {
+        background: rgba($c-accent, 0.03);
+      }
+      &:last-child td {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 40px 16px !important;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: $c-muted;
+  font-size: 0.88rem;
+}
+
+.empty-icon {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba($c-success, 0.12);
+  color: $c-success;
+  border: 1px solid rgba($c-success, 0.3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+
+  label {
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: #555;
+  }
+
+  input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    transition: all 0.25s ease;
+
+    &:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+    /* 🔥 DISABLED STYLE */
+    &:disabled {
+      background: #f3f4f6; // xám nhẹ
+      color: #999;
+      cursor: not-allowed;
+      border: 1px solid #e5e7eb;
+
+      /* hiệu ứng mờ nhẹ */
+      opacity: 0.9;
+
+      /* thêm icon lock cảm giác xịn hơn */
+      background-image: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.03) 25%,
+        transparent 25%
+      );
+    }
+  }
+
+  &.has-error input {
+    border-color: #ef4444;
+  }
+
+  .err-msg {
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 4px;
+  }
+}

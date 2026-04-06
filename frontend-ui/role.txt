@@ -1,0 +1,183 @@
+🧠 1. Vấn đề bạn đang giải quyết là gì?
+
+👉 Cùng 1 trang /books/:id
+nhưng:
+
+Guest → xem sơ
+User → xem chi tiết
+Admin → có thêm nút quản lý
+🧱 2. Cách làm chuẩn
+
+👉 Tách thành 3 view riêng:
+
+GuestView   → xem sơ
+UserView    → xem full
+AdminView   → full + sửa/xoá
+🔗 3. Ai gọi mấy thằng này?
+
+👉 Không phải router
+
+👉 Mà là BookPage
+
+🧩 4. Luồng hoạt động (rất quan trọng)
+Route (/books/:id)
+        ↓
+BookDetail (page)
+        ↓
+BookPage (xử lý role)
+        ↓
+GuestView | UserView | AdminView
+🧪 5. Code tối giản nhất
+📄 BookPage.jsx
+import GuestView from "./GuestView";
+import UserView from "./UserView";
+import AdminView from "./AdminView";
+
+function BookPage({ role, book }) {
+  if (role === "admin") return <AdminView book={book} />;
+  if (role === "user") return <UserView book={book} />;
+  return <GuestView book={book} />;
+}
+
+export default BookPage;
+📄 BookDetail.jsx
+import BookPage from "../components/book/BookPage";
+import { useParams } from "react-router-dom";
+
+function BookDetail() {
+  const { id } = useParams();
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const role = user ? user.role : "guest";
+
+  const book = {
+    title: "Doraemon",
+    shortDescription: "Truyện mèo máy",
+    fullDescription: "Truyện dài...",
+    author: "Fujiko"
+  };
+
+  return <BookPage role={role} book={book} />;
+}
+📄 GuestView.jsx
+function GuestView({ book }) {
+  return (
+    <>
+      <h2>{book.title}</h2>
+      <p>{book.shortDescription}</p>
+      <p>👉 Đăng nhập để xem chi tiết</p>
+    </>
+  );
+}
+📄 UserView.jsx
+function UserView({ book }) {
+  return (
+    <>
+      <h2>{book.title}</h2>
+      <p>{book.fullDescription}</p>
+      <p>{book.author}</p>
+    </>
+  );
+}
+📄 AdminView.jsx
+function AdminView({ book }) {
+  return (
+    <>
+      <h2>{book.title}</h2>
+      <p>{book.fullDescription}</p>
+      <button>Sửa</button>
+      <button>Xoá</button>
+    </>
+  );
+}
+💡 6. Hiểu đúng bản chất (cực quan trọng)
+
+👉 Bạn không tạo 3 trang khác nhau
+
+👉 Bạn chỉ có:
+
+/books/:id
+
+🎯 1. BookPage nhận role và book từ đâu?
+
+👉 Từ component cha truyền xuống (props)
+
+Cụ thể ở đây là:
+
+BookDetail (page)
+        ↓
+BookPage (props)
+🧩 2. Luồng đúng của bạn
+Route (/books/:id)
+        ↓
+BookDetail.jsx   👈 gọi API + lấy role
+        ↓
+BookPage.jsx     👈 nhận props
+        ↓
+Guest/User/Admin View
+✅ 3. BookDetail.jsx (chỗ truyền data)
+import BookPage from "../components/book/BookPage"
+import { useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import axios from "axios"
+
+function BookDetail() {
+  const { id } = useParams()
+
+  const [book, setBook] = useState(null)
+
+  // 👇 lấy role từ localStorage
+  const user = JSON.parse(localStorage.getItem("user"))
+  const role = user ? user.role : "guest"
+
+  useEffect(() => {
+    loadBook()
+  }, [id])
+
+  const loadBook = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_APP_URL}/books/${id}`
+      )
+      setBook(res.data.data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  if (!book) return <p>Loading...</p>
+
+  return <BookPage role={role} book={book} />
+}
+
+export default BookDetail
+💡 4. Giải thích dễ hiểu
+🔹 role từ đâu?
+
+👉 từ login (localStorage)
+
+const user = JSON.parse(localStorage.getItem("user"))
+const role = user ? user.role : "guest"
+🔹 book từ đâu?
+
+👉 từ API
+
+GET /books/:id
+🧠 5. Tóm lại (cực quan trọng)
+Data	Lấy ở đâu
+role	localStorage (user login)
+book	API backend
+
+👉 Sau đó:
+
+<BookPage role={role} book={book} />
+❗ Sai lầm thường gặp
+
+❌ Gọi API trong BookPage
+❌ Lấy role trong UserView
+
+👉 👉 Sai
+
+✅ Quy tắc đúng
+Page (BookDetail) → xử lý data
+Component (BookPage) → render UI
