@@ -31,9 +31,9 @@ POST	/books/{id}/authors	ADMIN	Gán tác giả cho sách
 GET	/books/search?keyword=	PermitAll	Tìm kiếm sách
 Tác giả /api/v1/authors
 Method	Path	Quyền	Mô tả
-POST	/authors	ADMIN	Tạo tác giả
-GET	/authors	PermitAll	Danh sách tác giả
-GET	/authors/{id}	PermitAll	Chi tiết tác giả
+POST	/authors	ADMIN	Tạo tác giả ✅ 
+GET	/authors	PermitAll	Danh sách tác giả  ✅ 
+GET	/authors/{id}	PermitAll	Chi tiết tác giả ✅ 
 PUT	/authors/{id}	ADMIN	Cập nhật tác giả
 DELETE	/authors/{id}	ADMIN	Xóa tác giả
 GET	/authors/{id}/books	PermitAll	Danh sách sách theo tác giả  ✅

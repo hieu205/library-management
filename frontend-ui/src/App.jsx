@@ -26,6 +26,7 @@ import Login from "./components/login/Login"
 import BookPage from "./components/views/BookView/BookPage/BookPage"
 import BookDetails from "./components/views/BookView/BookDetails/BookDetails"
 import Dashboard from "./components/dashboard/Dashboard"
+import Author from "./components/author/Author"
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
@@ -66,12 +67,16 @@ const router = createBrowserRouter(
           element={<BookPage />}
         ></Route>
         <Route
-          path="profile"
+          path="admin/profile"
           element={<Profile />}
         ></Route>
         <Route
-          path="dashboard"
+          path="admin/dashboard"
           element={<Dashboard />}
+        ></Route>
+        <Route
+          path="admin/authors"
+          element={<Author />}
         ></Route>
       </Route>
     </Route>,
