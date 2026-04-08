@@ -5,6 +5,7 @@ import RoleRoute from './components/RoleRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import BookCatalog from './pages/books/BookCatalog';
 import BookList from './pages/books/BookList';
@@ -33,6 +34,7 @@ export default function App() {
             }
           >
             <Route index element={<BookCatalog />} />
+            <Route path="home" element={<Home />} />
             <Route
               path="dashboard"
               element={

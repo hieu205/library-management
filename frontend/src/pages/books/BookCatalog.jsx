@@ -410,13 +410,13 @@ export default function BookCatalog() {
                             >
                                 Đóng
                             </button>
-                            {isAuthenticated && !canManage && (
+                            {!canManage && (
                                 <button
                                     className="btn btn-primary"
                                     onClick={() => openBorrowModal(selectedBook)}
                                     style={{ flex: 1 }}
                                 >
-                                    <IoAdd /> Mượn sách
+                                    <IoAdd /> {isAuthenticated ? 'Mượn sách' : 'Đăng nhập để mượn'}
                                 </button>
                             )}
                         </div>
