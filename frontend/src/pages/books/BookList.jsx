@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { IoAdd, IoSearch, IoPencil, IoTrash, IoEye } from 'react-icons/io5';
 import { bookService, authorService, categoryService } from '../../services/api';
 import Modal from '../../components/Modal';
@@ -6,13 +6,15 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
 export default function BookList() {
-    const { isAdmin, isLibrarian } = useAuth();
-    const canManage = isAdmin || isLibrarian;
+    const { isAdmin } = useAuth();
+    const canManage = isAdmin;
     const [books, setBooks] = useState([]);
     const [authors, setAuthors] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [authorFilter, setAuthorFilter] = useState('all');
+    const [categoryFilter, setCategoryFilter] = useState('all');
     const [modalOpen, setModalOpen] = useState(false);
     const [detailModal, setDetailModal] = useState(false);
     const [selectedBook, setSelectedBook] = useState(null);
@@ -25,11 +27,7 @@ export default function BookList() {
 
     const loadData = async () => {
         try {
-            const requests = [bookService.getAll()];
-            if (canManage) {
-                requests.push(authorService.getAll(), categoryService.getAll());
-            }
-
+            const requests = [bookService.getAll(), authorService.getAll(), categoryService.getAll()];
             const responses = await Promise.all(requests);
             const [booksRes, authorsRes, catsRes] = responses;
             setBooks(booksRes.data.data || []);
@@ -39,18 +37,28 @@ export default function BookList() {
         finally { setLoading(false); }
     };
 
-    const handleSearch = async () => {
-        if (!search.trim()) { loadData(); return; }
-        try {
-            const res = await bookService.search(search);
-            setBooks(res.data.data || []);
-        } catch { toast.error('Tìm kiếm thất bại'); }
-    };
+    const filteredBooks = useMemo(() => {
+        const keyword = search.trim().toLowerCase();
 
-    useEffect(() => {
-        const timer = setTimeout(handleSearch, 400);
-        return () => clearTimeout(timer);
-    }, [search]);
+        return books
+            .filter((book) => {
+                if (authorFilter === 'all') return true;
+                return book.authors?.some((a) => String(a.id) === authorFilter);
+            })
+            .filter((book) => {
+                if (categoryFilter === 'all') return true;
+                return book.categories?.some((c) => String(c.id) === categoryFilter);
+            })
+            .filter((book) => {
+                if (!keyword) return true;
+                return (
+                    book.title?.toLowerCase().includes(keyword) ||
+                    book.isbn?.toLowerCase().includes(keyword) ||
+                    book.authors?.some((a) => a.name?.toLowerCase().includes(keyword)) ||
+                    book.categories?.some((c) => c.name?.toLowerCase().includes(keyword))
+                );
+            });
+    }, [books, search, authorFilter, categoryFilter]);
 
     const openCreate = () => {
         setSelectedBook(null);
@@ -80,6 +88,7 @@ export default function BookList() {
         const payload = {
             ...form,
             publishYear: form.publishYear ? parseInt(form.publishYear) : null,
+            isbn: form.isbn || null,
         };
         try {
             if (selectedBook) {
@@ -92,7 +101,16 @@ export default function BookList() {
             setModalOpen(false);
             loadData();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Thao tác thất bại!');
+            const details = err.response?.data?.details;
+            const detailMessage = details
+                ? Object.values(details).join(' | ')
+                : null;
+            const status = err.response?.status;
+            if (status === 403) {
+                toast.error('Bạn không có quyền thêm/cập nhật sách (chỉ ADMIN).');
+                return;
+            }
+            toast.error(detailMessage || err.response?.data?.message || 'Thao tác thất bại!');
         }
     };
 
@@ -106,6 +124,10 @@ export default function BookList() {
             toast.success('Xóa sách thành công!');
             loadData();
         } catch (err) {
+            if (err.response?.status === 403) {
+                toast.error('Bạn không có quyền xóa sách (chỉ ADMIN).');
+                return;
+            }
             toast.error(err.response?.data?.message || 'Xóa thất bại!');
         }
     };
@@ -120,7 +142,7 @@ export default function BookList() {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">{canManage ? 'Quản lý Sách' : 'Danh sách Sách'}</h1>
-                    <p className="page-title-sub">{books.length} cuốn sách trong thư viện</p>
+                    <p className="page-title-sub">{filteredBooks.length} / {books.length} cuốn sách trong thư viện</p>
                 </div>
                 {canManage && (
                     <div className="page-actions">
@@ -130,12 +152,32 @@ export default function BookList() {
             </div>
 
             <div className="table-wrapper">
-                <div className="table-toolbar">
+                <div className="table-toolbar" style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '12px', alignItems: 'center' }}>
                     <div className="search-wrapper">
                         <IoSearch />
                         <input type="text" className="search-input" placeholder="Tìm kiếm sách..."
                             value={search} onChange={(e) => setSearch(e.target.value)} />
                     </div>
+                    <select
+                        className="form-control"
+                        value={authorFilter}
+                        onChange={(e) => setAuthorFilter(e.target.value)}
+                    >
+                        <option value="all">Tất cả tác giả</option>
+                        {authors.map((a) => (
+                            <option key={a.id} value={String(a.id)}>{a.name}</option>
+                        ))}
+                    </select>
+                    <select
+                        className="form-control"
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                    >
+                        <option value="all">Tất cả thể loại</option>
+                        {categories.map((c) => (
+                            <option key={c.id} value={String(c.id)}>{c.name}</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="table-responsive">
                     <table>
@@ -146,11 +188,11 @@ export default function BookList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {books.length === 0 ? (
+                            {filteredBooks.length === 0 ? (
                                 <tr><td colSpan="7" className="text-center text-muted" style={{ padding: '40px' }}>
                                     Không tìm thấy sách nào
                                 </td></tr>
-                            ) : books.map((book) => (
+                            ) : filteredBooks.map((book) => (
                                 <tr key={book.id}>
                                     <td>{book.id}</td>
                                     <td><strong>{book.title}</strong></td>

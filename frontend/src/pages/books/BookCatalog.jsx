@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     IoSearch, IoBookSharp, IoFilter, IoClose,
-    IoLibrary, IoTime, IoRocket, IoShieldCheckmark
+    IoLibrary, IoTime, IoRocket, IoShieldCheckmark, IoAdd
 } from 'react-icons/io5';
-import { bookService, authorService, categoryService } from '../../services/api';
+import { bookService, authorService, categoryService, borrowService } from '../../services/api';
 import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -28,7 +28,8 @@ const features = [
 ];
 
 export default function BookCatalog() {
-    const { isAdmin, isLibrarian } = useAuth();
+    const { isAdmin, isLibrarian, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const canManage = isAdmin || isLibrarian;
 
     const [allBooks, setAllBooks] = useState([]);
@@ -41,6 +42,10 @@ export default function BookCatalog() {
     const [filterOpen, setFilterOpen] = useState(false);
     const [detailModal, setDetailModal] = useState(false);
     const [selectedBook, setSelectedBook] = useState(null);
+    const [borrowModal, setBorrowModal] = useState(false);
+    const [borrowQuantity, setBorrowQuantity] = useState(1);
+    const [borrowDueDate, setBorrowDueDate] = useState('');
+    const [borrowLoading, setBorrowLoading] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -113,6 +118,71 @@ export default function BookCatalog() {
     const openDetail = (book) => {
         setSelectedBook(book);
         setDetailModal(true);
+    };
+
+    const openBorrowModal = (book) => {
+        if (!isAuthenticated) {
+            toast.error('Bạn cần đăng nhập để gửi yêu cầu mượn sách');
+            navigate('/login');
+            return;
+        }
+        setSelectedBook(book);
+        setDetailModal(false);
+        setBorrowModal(true);
+        setBorrowQuantity(1);
+        setBorrowDueDate('');
+    };
+
+    const handleBorrow = async () => {
+        if (!isAuthenticated) {
+            toast.error('Bạn cần đăng nhập để gửi yêu cầu mượn sách');
+            navigate('/login');
+            return;
+        }
+        if (!selectedBook) return;
+        const quantity = Number.parseInt(borrowQuantity, 10);
+        const bookId = Number.parseInt(selectedBook.id, 10);
+
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            toast.error('Số lượng phải lớn hơn 0');
+            return;
+        }
+
+        if (!Number.isInteger(bookId) || bookId < 1) {
+            toast.error('Dữ liệu sách không hợp lệ');
+            return;
+        }
+
+        if (borrowDueDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const dueDateObj = new Date(`${borrowDueDate}T00:00:00`);
+            if (dueDateObj <= today) {
+                toast.error('Ngày hạn trả phải sau ngày hôm nay');
+                return;
+            }
+        }
+
+        try {
+            setBorrowLoading(true);
+            await borrowService.createRequest({
+                items: [{ bookId, quantity }],
+                dueDate: borrowDueDate || null,
+            });
+            toast.success('Đã gửi yêu cầu mượn sách! Vui lòng chờ admin duyệt.');
+            setBorrowModal(false);
+            setBorrowQuantity(1);
+            setBorrowDueDate('');
+            setSelectedBook(null);
+        } catch (err) {
+            const details = err.response?.data?.details;
+            const detailMessage = details
+                ? Object.values(details).join(' | ')
+                : null;
+            toast.error(detailMessage || err.response?.data?.message || 'Gửi yêu cầu mượn thất bại!');
+        } finally {
+            setBorrowLoading(false);
+        }
     };
 
     if (loading) {
@@ -332,9 +402,87 @@ export default function BookCatalog() {
                                 {selectedBook.categories?.map((c) => <span key={c.id} className="badge badge-purple">{c.name}</span>)}
                             </div>
                         </div>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setDetailModal(false)}
+                                style={{ flex: 1 }}
+                            >
+                                Đóng
+                            </button>
+                            {!canManage && (
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => openBorrowModal(selectedBook)}
+                                    style={{ flex: 1 }}
+                                >
+                                    <IoAdd /> {isAuthenticated ? 'Mượn sách' : 'Đăng nhập để mượn'}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
             </Modal>
+
+                    {/* Borrow Modal */}
+                    <Modal isOpen={borrowModal && !canManage} onClose={() => setBorrowModal(false)}
+                        title="Mượn sách" size="md">
+                        {selectedBook && (
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                handleBorrow();
+                            }}>
+                                <div className="detail-item">
+                                    <div className="detail-label">Sách</div>
+                                    <div className="detail-value">{selectedBook.title}</div>
+                                </div>
+                                <div className="detail-item mt-md">
+                                    <div className="detail-label">Tác giả</div>
+                                    <div className="detail-value">
+                                        {selectedBook.authors?.map(a => a.name).join(', ') || 'Chưa rõ tác giả'}
+                                    </div>
+                                </div>
+                                <div className="form-group mt-md">
+                                    <label>Số lượng muốn mượn</label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        min="1"
+                                        value={borrowQuantity}
+                                        onChange={(e) => setBorrowQuantity(parseInt(e.target.value) || 1)}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Ngày hạn trả (tùy chọn)</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={borrowDueDate}
+                                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                                        onChange={(e) => setBorrowDueDate(e.target.value)}
+                                    />
+                                </div>
+                                <div className="form-actions" style={{ marginTop: '20px' }}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => setBorrowModal(false)}
+                                        disabled={borrowLoading}
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={borrowLoading}
+                                    >
+                                        {borrowLoading ? 'Đang gửi...' : 'Gửi yêu cầu mượn'}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </Modal>
         </div>
     );
 }
