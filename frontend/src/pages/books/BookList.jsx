@@ -21,6 +21,7 @@ export default function BookList() {
     const [form, setForm] = useState({
         title: '', description: '', isbn: '', publishYear: '', language: 'Tiếng Việt',
         authorIds: [], categoryIds: [],
+        imageUrl1: '', imageUrl2: '', imageUrl3: '',
     });
 
     useEffect(() => { loadData(); }, []);
@@ -62,7 +63,7 @@ export default function BookList() {
 
     const openCreate = () => {
         setSelectedBook(null);
-        setForm({ title: '', description: '', isbn: '', publishYear: '', language: 'Tiếng Việt', authorIds: [], categoryIds: [] });
+        setForm({ title: '', description: '', isbn: '', publishYear: '', language: 'Tiếng Việt', authorIds: [], categoryIds: [], imageUrl1: '', imageUrl2: '', imageUrl3: '' });
         setModalOpen(true);
     };
 
@@ -76,6 +77,9 @@ export default function BookList() {
             language: book.language || '',
             authorIds: book.authors?.map((a) => a.id) || [],
             categoryIds: book.categories?.map((c) => c.id) || [],
+            imageUrl1: book.images?.imageUrl1 || '',
+            imageUrl2: book.images?.imageUrl2 || '',
+            imageUrl3: book.images?.imageUrl3 || '',
         });
         setModalOpen(true);
     };
@@ -278,6 +282,21 @@ export default function BookList() {
                             ))}
                         </div>
                     </div>
+                    <div className="form-group">
+                        <label>Ảnh chính (URL) *</label>
+                        <input type="text" className="form-control" required placeholder="https://example.com/image1.jpg"
+                            value={form.imageUrl1} onChange={(e) => setForm({ ...form, imageUrl1: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label>Ảnh phụ 1 (URL) *</label>
+                        <input type="text" className="form-control" required placeholder="https://example.com/image2.jpg"
+                            value={form.imageUrl2} onChange={(e) => setForm({ ...form, imageUrl2: e.target.value })} />
+                    </div>
+                    <div className="form-group">
+                        <label>Ảnh phụ 2 (URL) *</label>
+                        <input type="text" className="form-control" required placeholder="https://example.com/image3.jpg"
+                            value={form.imageUrl3} onChange={(e) => setForm({ ...form, imageUrl3: e.target.value })} />
+                    </div>
                         <div className="form-actions">
                             <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Hủy</button>
                             <button type="submit" className="btn btn-primary">{selectedBook ? 'Cập nhật' : 'Thêm mới'}</button>
@@ -325,6 +344,25 @@ export default function BookList() {
                                 {selectedBook.categories?.map((c) => <span key={c.id} className="badge badge-purple">{c.name}</span>)}
                             </div>
                         </div>
+                        {selectedBook.images && (
+                            <div className="detail-item mt-md">
+                                <div className="detail-label">Hình ảnh</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '12px' }}>
+                                    <div>
+                                        <img src={selectedBook.images.imageUrl1} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' }} alt="Ảnh chính" />
+                                        <small className="text-muted" style={{ marginTop: '8px', display: 'block' }}>Ảnh chính</small>
+                                    </div>
+                                    <div>
+                                        <img src={selectedBook.images.imageUrl2} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' }} alt="Ảnh phụ 1" />
+                                        <small className="text-muted" style={{ marginTop: '8px', display: 'block' }}>Ảnh phụ 1</small>
+                                    </div>
+                                    <div>
+                                        <img src={selectedBook.images.imageUrl3} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' }} alt="Ảnh phụ 2" />
+                                        <small className="text-muted" style={{ marginTop: '8px', display: 'block' }}>Ảnh phụ 2</small>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </Modal>

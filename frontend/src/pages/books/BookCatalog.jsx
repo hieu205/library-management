@@ -338,11 +338,14 @@ export default function BookCatalog() {
                     ) : (
                         filteredBooks.map(book => (
                             <div key={book.id} className="book-card" onClick={() => openDetail(book)}>
-                                <div
-                                    className="book-card-cover"
-                                    style={{ backgroundColor: coverColors[book.id % coverColors.length] }}
-                                >
-                                    <IoBookSharp className="book-card-icon" />
+                                <div className="book-card-cover">
+                                    {book.images?.imageUrl1 ? (
+                                        <img src={book.images.imageUrl1} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ backgroundColor: coverColors[book.id % coverColors.length], width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <IoBookSharp className="book-card-icon" />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="book-card-body">
                                     <span className="book-card-category">
@@ -402,6 +405,25 @@ export default function BookCatalog() {
                                 {selectedBook.categories?.map((c) => <span key={c.id} className="badge badge-purple">{c.name}</span>)}
                             </div>
                         </div>
+                        {selectedBook.images && (
+                            <div className="detail-item mt-md">
+                                <div className="detail-label">Hình ảnh</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '12px' }}>
+                                    <div>
+                                        <img src={selectedBook.images.imageUrl1} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' }} alt="Ảnh chính" />
+                                        <small className="text-muted" style={{ marginTop: '8px', display: 'block' }}>Ảnh chính</small>
+                                    </div>
+                                    <div>
+                                        <img src={selectedBook.images.imageUrl2} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' }} alt="Ảnh phụ 1" />
+                                        <small className="text-muted" style={{ marginTop: '8px', display: 'block' }}>Ảnh phụ 1</small>
+                                    </div>
+                                    <div>
+                                        <img src={selectedBook.images.imageUrl3} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' }} alt="Ảnh phụ 2" />
+                                        <small className="text-muted" style={{ marginTop: '8px', display: 'block' }}>Ảnh phụ 2</small>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
                             <button
                                 className="btn btn-secondary"
