@@ -1,59 +1,48 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - frontend-library-managment
+name: Deploy Library Management to Azure VM
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main  # Tự động chạy khi bạn push hoặc merge vào nhánh main
+  workflow_dispatch: # Cho phép bạn bấm nút chạy thủ công trên GitHub nếu muốn
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22.x'
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: .
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_167855A64D304659B5D81B18785C00EF }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0A50696564E94AD2915DFD290296856C }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6B108C16CAAF4970B3AD9C0DBC6F49E4 }}
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+      - name: Deploy to Azure VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          app-name: 'frontend-library-managment'
-          slot-name: 'Production'
-          package: .
-          
+          host: 13.75.55.206
+          username: hieu2005
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Khớp chính xác với tên bạn đã đặt
+          port: 22
+          script: |
+            # 1. Di chuyển vào thư mục dự án
+            cd ~/projects/library-management
+            
+            # 2. Cập nhật code mới nhất từ GitHub
+            git pull origin main
+            
+            # 3. Build và Restart Backend (Spring Boot)
+            cd backend
+            # Cấp quyền thực thi cho file mvnw nếu chưa có
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests
+            # Restart service để nhận file JAR mới
+            sudo systemctl restart library-backend
+            
+            # 4. Build Frontend (React/Vite)
+            cd ../frontend
+            # Cài đặt thư viện và build
+            npm install
+            npm run build
+            
+            # 5. Cấp lại quyền cho Nginx và làm mới service
+            chmod 755 /home/hieu2005
+            sudo systemctl restart nginx
+            
+            echo "Deploy thành công!"
