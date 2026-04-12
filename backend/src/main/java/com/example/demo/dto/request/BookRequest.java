@@ -39,4 +39,16 @@ public class BookRequest {
 
     private List<Long> categoryIds;
 
+    @NotBlank(message = "Ảnh chính (image_url_1) không được để trống")
+    @Size(max = 500, message = "URL ảnh chính không được vượt quá 500 ký tự")
+    private String imageUrl1;
+
+    @NotBlank(message = "Ảnh phụ 1 (image_url_2) không được để trống")
+    @Size(max = 500, message = "URL ảnh phụ 1 không được vượt quá 500 ký tự")
+    private String imageUrl2;
+
+    @NotBlank(message = "Ảnh phụ 2 (image_url_3) không được để trống")
+    @Size(max = 500, message = "URL ảnh phụ 2 không được vượt quá 500 ký tự")
+    private String imageUrl3;
+
 }
