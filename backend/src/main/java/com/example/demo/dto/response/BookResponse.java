@@ -25,6 +25,7 @@ public class BookResponse {
     private String language;
     private List<AuthorResponse> authors;
     private List<CategoryResponse> categories;
+    private BookImageResponse images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -45,6 +46,18 @@ public class BookResponse {
                         .map(bc -> CategoryResponse.fromEntity(bc.getCategory()))
                         .collect(Collectors.toList());
 
+        BookImageResponse imageResponse = null;
+        if (book.getImages() != null) {
+            imageResponse = BookImageResponse.builder()
+                    .id(book.getImages().getId())
+                    .imageUrl1(book.getImages().getImageUrl1())
+                    .imageUrl2(book.getImages().getImageUrl2())
+                    .imageUrl3(book.getImages().getImageUrl3())
+                    .createdAt(book.getImages().getCreatedAt())
+                    .updatedAt(book.getImages().getUpdatedAt())
+                    .build();
+        }
+
         return BookResponse.builder()
                 .id(book.getId())
                 .title(book.getTitle())
@@ -54,6 +67,7 @@ public class BookResponse {
                 .language(book.getLanguage())
                 .authors(authors)
                 .categories(categories)
+                .images(imageResponse)
                 .createdAt(book.getCreatedAt())
                 .updatedAt(book.getUpdatedAt())
                 .build();

@@ -34,6 +34,7 @@ public class BookService {
     private final BorrowItemRepository borrowItemRepository;
     private final BookAuthorRepository bookAuthorRepository;
     private final InventoryService inventoryService;
+    private final BookImageService bookImageService;
 
     @Transactional
     public BookResponse createBook(BookRequest request) {
@@ -85,6 +86,12 @@ public class BookService {
         }
 
         book = bookRepository.save(book);
+
+        // Tạo ảnh cho sách
+        bookImageService.createBookImages(book, request);
+        // Reload để lấy ảnh vừa tạo
+        book = bookRepository.findById(book.getId()).orElse(book);
+
         inventoryService.createInventoryForBook(book);
         System.out.println("[BACKEND] Tạo sách thành công - bookId=" + book.getId() + ", title=" + book.getTitle());
         return BookResponse.fromEntity(book);
@@ -148,6 +155,12 @@ public class BookService {
         }
 
         book = bookRepository.save(book);
+
+        // Cập nhật ảnh
+        bookImageService.updateBookImages(book, request);
+        // Reload để lấy ảnh vừa cập nhật
+        book = bookRepository.findById(book.getId()).orElse(book);
+
         System.out.println("[BACKEND] Cập nhật sách thành công - bookId=" + id);
         return BookResponse.fromEntity(book);
     }
