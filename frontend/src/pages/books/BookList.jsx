@@ -231,72 +231,72 @@ export default function BookList() {
                 <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
                     title={selectedBook ? 'Chỉnh sửa sách' : 'Thêm sách mới'} size="lg">
                     <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Tiêu đề *</label>
-                        <input type="text" className="form-control" required
-                            value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div className="form-group">
-                            <label>ISBN</label>
+                            <label>Tiêu đề *</label>
+                            <input type="text" className="form-control" required
+                                value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                            <div className="form-group">
+                                <label>ISBN</label>
+                                <input type="text" className="form-control"
+                                    value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Năm xuất bản</label>
+                                <input type="number" className="form-control"
+                                    value={form.publishYear} onChange={(e) => setForm({ ...form, publishYear: e.target.value })} />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label>Ngôn ngữ</label>
                             <input type="text" className="form-control"
-                                value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
+                                value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
                         </div>
                         <div className="form-group">
-                            <label>Năm xuất bản</label>
-                            <input type="number" className="form-control"
-                                value={form.publishYear} onChange={(e) => setForm({ ...form, publishYear: e.target.value })} />
+                            <label>Mô tả</label>
+                            <textarea className="form-control" rows="3"
+                                value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
                         </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Ngôn ngữ</label>
-                        <input type="text" className="form-control"
-                            value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
-                    </div>
-                    <div className="form-group">
-                        <label>Mô tả</label>
-                        <textarea className="form-control" rows="3"
-                            value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-                    </div>
-                    <div className="form-group">
-                        <label>Tác giả</label>
-                        <div className="checkbox-grid">
-                            {authors.map((a) => (
-                                <label key={a.id} className="checkbox-item">
-                                    <input type="checkbox" checked={form.authorIds.includes(a.id)}
-                                        onChange={() => setForm({ ...form, authorIds: toggleArray(form.authorIds, a.id) })} />
-                                    {a.name}
-                                </label>
-                            ))}
+                        <div className="form-group">
+                            <label>Tác giả</label>
+                            <div className="checkbox-grid">
+                                {authors.map((a) => (
+                                    <label key={a.id} className="checkbox-item">
+                                        <input type="checkbox" checked={form.authorIds.includes(a.id)}
+                                            onChange={() => setForm({ ...form, authorIds: toggleArray(form.authorIds, a.id) })} />
+                                        {a.name}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Thể loại</label>
-                        <div className="checkbox-grid">
-                            {categories.map((c) => (
-                                <label key={c.id} className="checkbox-item">
-                                    <input type="checkbox" checked={form.categoryIds.includes(c.id)}
-                                        onChange={() => setForm({ ...form, categoryIds: toggleArray(form.categoryIds, c.id) })} />
-                                    {c.name}
-                                </label>
-                            ))}
+                        <div className="form-group">
+                            <label>Thể loại</label>
+                            <div className="checkbox-grid">
+                                {categories.map((c) => (
+                                    <label key={c.id} className="checkbox-item">
+                                        <input type="checkbox" checked={form.categoryIds.includes(c.id)}
+                                            onChange={() => setForm({ ...form, categoryIds: toggleArray(form.categoryIds, c.id) })} />
+                                        {c.name}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Ảnh chính (URL) *</label>
-                        <input type="text" className="form-control" required placeholder="https://example.com/image1.jpg"
-                            value={form.imageUrl1} onChange={(e) => setForm({ ...form, imageUrl1: e.target.value })} />
-                    </div>
-                    <div className="form-group">
-                        <label>Ảnh phụ 1 (URL) *</label>
-                        <input type="text" className="form-control" required placeholder="https://example.com/image2.jpg"
-                            value={form.imageUrl2} onChange={(e) => setForm({ ...form, imageUrl2: e.target.value })} />
-                    </div>
-                    <div className="form-group">
-                        <label>Ảnh phụ 2 (URL) *</label>
-                        <input type="text" className="form-control" required placeholder="https://example.com/image3.jpg"
-                            value={form.imageUrl3} onChange={(e) => setForm({ ...form, imageUrl3: e.target.value })} />
-                    </div>
+                        <div className="form-group">
+                            <label>Ảnh chính (URL) *</label>
+                            <input type="text" className="form-control" required placeholder="https://example.com/image1.jpg"
+                                value={form.imageUrl1} onChange={(e) => setForm({ ...form, imageUrl1: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                            <label>Ảnh phụ 1 (URL) *</label>
+                            <input type="text" className="form-control" required placeholder="https://example.com/image2.jpg"
+                                value={form.imageUrl2} onChange={(e) => setForm({ ...form, imageUrl2: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                            <label>Ảnh phụ 2 (URL) *</label>
+                            <input type="text" className="form-control" required placeholder="https://example.com/image3.jpg"
+                                value={form.imageUrl3} onChange={(e) => setForm({ ...form, imageUrl3: e.target.value })} />
+                        </div>
                         <div className="form-actions">
                             <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Hủy</button>
                             <button type="submit" className="btn btn-primary">{selectedBook ? 'Cập nhật' : 'Thêm mới'}</button>

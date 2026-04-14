@@ -20,6 +20,8 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
 
     List<BorrowRecord> findByStatusOrderByCreatedAtAsc(String status);
 
+    List<BorrowRecord> findByStatus(String status);
+
     List<BorrowRecord> findByUser_IdOrderByCreatedAtDesc(Long userId);
 
     Page<BorrowRecord> findByUser_IdAndStatus(Long userId, String status, Pageable pageable);
@@ -37,4 +39,7 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
                 ORDER BY COUNT(br.id) DESC
             """)
     List<TopUserProjection> getTopUsers(Pageable pageable);
+
+    List<BorrowRecord> findByDueDateAndStatus(LocalDate dueDate, String status);
+
 }
