@@ -446,65 +446,65 @@ export default function BookCatalog() {
                 )}
             </Modal>
 
-                    {/* Borrow Modal */}
-                    <Modal isOpen={borrowModal && !canManage} onClose={() => setBorrowModal(false)}
-                        title="Mượn sách" size="md">
-                        {selectedBook && (
-                            <form onSubmit={(e) => {
-                                e.preventDefault();
-                                handleBorrow();
-                            }}>
-                                <div className="detail-item">
-                                    <div className="detail-label">Sách</div>
-                                    <div className="detail-value">{selectedBook.title}</div>
-                                </div>
-                                <div className="detail-item mt-md">
-                                    <div className="detail-label">Tác giả</div>
-                                    <div className="detail-value">
-                                        {selectedBook.authors?.map(a => a.name).join(', ') || 'Chưa rõ tác giả'}
-                                    </div>
-                                </div>
-                                <div className="form-group mt-md">
-                                    <label>Số lượng muốn mượn</label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        min="1"
-                                        value={borrowQuantity}
-                                        onChange={(e) => setBorrowQuantity(parseInt(e.target.value) || 1)}
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Ngày hạn trả (tùy chọn)</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        value={borrowDueDate}
-                                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-                                        onChange={(e) => setBorrowDueDate(e.target.value)}
-                                    />
-                                </div>
-                                <div className="form-actions" style={{ marginTop: '20px' }}>
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={() => setBorrowModal(false)}
-                                        disabled={borrowLoading}
-                                    >
-                                        Hủy
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary"
-                                        disabled={borrowLoading}
-                                    >
-                                        {borrowLoading ? 'Đang gửi...' : 'Gửi yêu cầu mượn'}
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-                    </Modal>
+            {/* Borrow Modal */}
+            <Modal isOpen={borrowModal && !canManage} onClose={() => setBorrowModal(false)}
+                title="Mượn sách" size="md">
+                {selectedBook && (
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        handleBorrow();
+                    }}>
+                        <div className="detail-item">
+                            <div className="detail-label">Sách</div>
+                            <div className="detail-value">{selectedBook.title}</div>
+                        </div>
+                        <div className="detail-item mt-md">
+                            <div className="detail-label">Tác giả</div>
+                            <div className="detail-value">
+                                {selectedBook.authors?.map(a => a.name).join(', ') || 'Chưa rõ tác giả'}
+                            </div>
+                        </div>
+                        <div className="form-group mt-md">
+                            <label>Số lượng muốn mượn</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                min="1"
+                                value={borrowQuantity}
+                                onChange={(e) => setBorrowQuantity(parseInt(e.target.value) || 1)}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Ngày hạn trả (tùy chọn)</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={borrowDueDate}
+                                min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                                onChange={(e) => setBorrowDueDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="form-actions" style={{ marginTop: '20px' }}>
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => setBorrowModal(false)}
+                                disabled={borrowLoading}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                className="btn btn-primary"
+                                disabled={borrowLoading}
+                            >
+                                {borrowLoading ? 'Đang gửi...' : 'Gửi yêu cầu mượn'}
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
         </div>
     );
 }
