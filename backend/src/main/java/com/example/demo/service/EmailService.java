@@ -57,7 +57,7 @@ public class EmailService {
     }
 
     // 8h30 (vì để tránh trùng log với gmail nhắc nhở trên)
-    @Scheduled(cron = "0 38 16 * * ?")
+    @Scheduled(cron = "0 30 8 * * ?")
     public void sendGmailAfter() {
         List<BorrowRecord> res = borrowRecordRepository.findByStatus("BORROWING");
 
