@@ -3,8 +3,8 @@ name: Deploy Library Management to Azure VM
 on:
   push:
     branches:
-      - main  # Tự động chạy khi bạn push hoặc merge vào nhánh main
-  workflow_dispatch: # Cho phép bạn bấm nút chạy thủ công trên GitHub nếu muốn
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -18,31 +18,34 @@ jobs:
         with:
           host: 13.75.55.206
           username: hieu2005
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # Khớp chính xác với tên bạn đã đặt
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # 1. Di chuyển vào thư mục dự án
+            # 1. Vào thư mục dự án và cập nhật code từ GitHub
             cd ~/projects/library-management
-            
-            # 2. Cập nhật code mới nhất từ GitHub
             git pull origin main
             
-            # 3. Build và Restart Backend (Spring Boot)
+            # 2. Build và Restart Backend (Spring Boot)
+            echo "--- Building Backend ---"
             cd backend
-            # Cấp quyền thực thi cho file mvnw nếu chưa có
             chmod +x mvnw
             ./mvnw clean package -DskipTests
-            # Restart service để nhận file JAR mới
+            # Restart service backend (đảm bảo file .service của bạn trỏ vào đúng file .jar trong target)
             sudo systemctl restart library-backend
             
-            # 4. Build Frontend (React/Vite)
+            # 3. Build Frontend (React/Vite)
+            echo "--- Building Frontend ---"
             cd ../frontend
-            # Cài đặt thư viện và build
             npm install
             npm run build
             
-            # 5. Cấp lại quyền cho Nginx và làm mới service
+            # 4. Cấp quyền quan trọng để Nginx có thể đọc file
+            # Nginx cần quyền 'x' ở thư mục người dùng để truy cập vào sâu bên trong
             chmod 755 /home/hieu2005
-            sudo systemctl restart nginx
+            # Cấp quyền đọc cho toàn bộ thư mục dự án và thư mục dist
+            chmod -R 755 /home/hieu2005/projects/library-management/frontend/dist
             
-            echo "Deploy thành công!"
+            # 5. Làm mới Nginx để đảm bảo nhận diện các file tĩnh mới
+            sudo systemctl reload nginx
+            
+            echo "--- Deploy thành công hoàn toàn! ---"
