@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,182 +22,198 @@ import com.example.demo.repository.InventoryLogRepository;
 import com.example.demo.repository.InventoryRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "inventory")
 public class InventoryService {
 
-    private final InventoryRepository inventoryRepository;
-    private final InventoryLogRepository inventoryLogRepository;
-    private final BookRepository bookRepository;
+        private final InventoryRepository inventoryRepository;
+        private final InventoryLogRepository inventoryLogRepository;
+        private final BookRepository bookRepository;
 
-    @Transactional
-    public void createInventoryForBook(Book book) {
-        System.out.println("[BACKEND] Khởi tạo tồn kho ban đầu cho sách mới - bookId=" + book.getId());
-        Inventory inventory = Inventory.builder()
-                .book(book)
-                .totalQuantity(0)
-                .availableQuantity(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        inventoryRepository.save(inventory);
-    }
-
-    // Nếu chưa có inventory → tạo mới. Nếu đã có → cộng thêm số lượng
-    @Transactional
-    public InventoryResponse addInventory(InventoryRequest request) {
-        System.out.println("[BACKEND] Bắt đầu nhập kho - bookId=" + request.getBookId() + ", quantity="
-                + request.getQuantity());
-        Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy sách với id: " + request.getBookId()));
-
-        Optional<Inventory> opt = inventoryRepository.findByBook_Id(request.getBookId());
-        Inventory inventory;
-
-        if (opt.isEmpty()) {
-            inventory = Inventory.builder()
-                    .book(book)
-                    .totalQuantity(request.getQuantity())
-                    .availableQuantity(request.getQuantity())
-                    .changeType(Inventory.IMPORT)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-        } else {
-            inventory = opt.get();
-            inventory.setTotalQuantity(inventory.getTotalQuantity() + request.getQuantity());
-            inventory.setAvailableQuantity(inventory.getAvailableQuantity() + request.getQuantity());
-            inventory.setChangeType(Inventory.IMPORT);
-            inventory.setUpdatedAt(LocalDateTime.now());
-        }
-        inventoryRepository.save(inventory);
-
-        inventoryLogRepository.save(InventoryLog.builder()
-                .book(book)
-                .changeType(InventoryLog.IMPORT)
-                .quantityChanged(request.getQuantity())
-                .totalAfter(inventory.getTotalQuantity())
-                .availableAfter(inventory.getAvailableQuantity())
-                .note(request.getNote())
-                .createdAt(LocalDateTime.now())
-                .build());
-
-        System.out.println("[BACKEND] Nhập kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
-                + inventory.getAvailableQuantity());
-
-        return InventoryResponse.fromEntity(inventory);
-    }
-
-    // Xuất kho: giảm available (khi người dùng mượn sách)
-    @Transactional
-    public InventoryResponse decreaseInventory(InventoryRequest request) {
-        System.out.println("[BACKEND] Bắt đầu xuất kho - bookId=" + request.getBookId() + ", quantity="
-                + request.getQuantity());
-        Inventory inventory = inventoryRepository.findByBook_Id(request.getBookId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy tồn kho cho sách id: " + request.getBookId()));
-
-        if (inventory.getAvailableQuantity() < request.getQuantity()) {
-            System.err.println("[BACKEND] Xuất kho thất bại do không đủ số lượng - bookId=" + request.getBookId()
-                    + ", con=" + inventory.getAvailableQuantity() + ", yeuCau=" + request.getQuantity());
-            throw new RuntimeException(
-                    "Số lượng sách trong kho không đủ (còn "
-                            + inventory.getAvailableQuantity() + " cuốn)");
+        @Transactional
+        public void createInventoryForBook(Book book) {
+                System.out.println("[BACKEND] Khởi tạo tồn kho ban đầu cho sách mới - bookId=" + book.getId());
+                Inventory inventory = Inventory.builder()
+                                .book(book)
+                                .totalQuantity(0)
+                                .availableQuantity(0)
+                                .createdAt(LocalDateTime.now())
+                                .updatedAt(LocalDateTime.now())
+                                .build();
+                inventoryRepository.save(inventory);
         }
 
-        int newAvailable = inventory.getAvailableQuantity() - request.getQuantity();
-        inventory.setAvailableQuantity(newAvailable);
-        inventory.setChangeType(Inventory.EXPORT);
-        inventory.setUpdatedAt(LocalDateTime.now());
-        inventoryRepository.save(inventory);
+        // Nếu chưa có inventory → tạo mới. Nếu đã có → cộng thêm số lượng
+        @CacheEvict(value = "inventory", allEntries = true)
+        @Transactional
+        public InventoryResponse addInventory(InventoryRequest request) {
+                log.info("[Cache EVICT] addInventory - clearing all inventory cache");
+                System.out.println("[BACKEND] Bắt đầu nhập kho - bookId=" + request.getBookId() + ", quantity="
+                                + request.getQuantity());
+                Book book = bookRepository.findById(request.getBookId())
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Không tìm thấy sách với id: " + request.getBookId()));
 
-        inventoryLogRepository.save(InventoryLog.builder()
-                .book(inventory.getBook())
-                .changeType(InventoryLog.EXPORT)
-                .quantityChanged(-request.getQuantity())
-                .totalAfter(inventory.getTotalQuantity())
-                .availableAfter(newAvailable)
-                .note(request.getNote())
-                .createdAt(LocalDateTime.now())
-                .build());
+                Optional<Inventory> opt = inventoryRepository.findByBook_Id(request.getBookId());
+                Inventory inventory;
 
-        System.out.println("[BACKEND] Xuất kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
-                + newAvailable);
+                if (opt.isEmpty()) {
+                        inventory = Inventory.builder()
+                                        .book(book)
+                                        .totalQuantity(request.getQuantity())
+                                        .availableQuantity(request.getQuantity())
+                                        .changeType(Inventory.IMPORT)
+                                        .createdAt(LocalDateTime.now())
+                                        .updatedAt(LocalDateTime.now())
+                                        .build();
+                } else {
+                        inventory = opt.get();
+                        inventory.setTotalQuantity(inventory.getTotalQuantity() + request.getQuantity());
+                        inventory.setAvailableQuantity(inventory.getAvailableQuantity() + request.getQuantity());
+                        inventory.setChangeType(Inventory.IMPORT);
+                        inventory.setUpdatedAt(LocalDateTime.now());
+                }
+                inventoryRepository.save(inventory);
 
-        return InventoryResponse.fromEntity(inventory);
-    }
+                inventoryLogRepository.save(InventoryLog.builder()
+                                .book(book)
+                                .changeType(InventoryLog.IMPORT)
+                                .quantityChanged(request.getQuantity())
+                                .totalAfter(inventory.getTotalQuantity())
+                                .availableAfter(inventory.getAvailableQuantity())
+                                .note(request.getNote())
+                                .createdAt(LocalDateTime.now())
+                                .build());
 
-    // Nhập kho: tăng available (khi người dùng trả sách)
-    @Transactional
-    public InventoryResponse increaseInventory(InventoryRequest request) {
-        System.out.println("[BACKEND] Bắt đầu tăng tồn kho - bookId=" + request.getBookId() + ", quantity="
-                + request.getQuantity());
-        Inventory inventory = inventoryRepository.findByBook_Id(request.getBookId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy tồn kho cho sách id: " + request.getBookId()));
+                System.out.println("[BACKEND] Nhập kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
+                                + inventory.getAvailableQuantity());
 
-        int newAvailable = inventory.getAvailableQuantity() + request.getQuantity();
-        inventory.setAvailableQuantity(newAvailable);
-        inventory.setChangeType(Inventory.IMPORT);
-        inventory.setUpdatedAt(LocalDateTime.now());
-        inventoryRepository.save(inventory);
-
-        inventoryLogRepository.save(InventoryLog.builder()
-                .book(inventory.getBook())
-                .changeType(InventoryLog.IMPORT)
-                .quantityChanged(request.getQuantity())
-                .totalAfter(inventory.getTotalQuantity())
-                .availableAfter(newAvailable)
-                .note(request.getNote())
-                .createdAt(LocalDateTime.now())
-                .build());
-
-        System.out.println("[BACKEND] Tăng tồn kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
-                + newAvailable);
-
-        return InventoryResponse.fromEntity(inventory);
-    }
-
-    public List<InventoryResponse> getAllInventory() {
-        List<Inventory> listInventory = inventoryRepository.findAll();
-
-        List<InventoryResponse> listInventoryResponses = new ArrayList<>();
-        for (Inventory x : listInventory) {
-            listInventoryResponses.add(InventoryResponse.fromEntity(x));
+                return InventoryResponse.fromEntity(inventory);
         }
 
-        return listInventoryResponses;
-    }
+        // Xuất kho: giảm available (khi người dùng mượn sách)
+        @CacheEvict(value = "inventory", allEntries = true)
+        @Transactional
+        public InventoryResponse decreaseInventory(InventoryRequest request) {
+                log.info("[Cache EVICT] decreaseInventory - clearing all inventory cache");
+                System.out.println("[BACKEND] Bắt đầu xuất kho - bookId=" + request.getBookId() + ", quantity="
+                                + request.getQuantity());
+                Inventory inventory = inventoryRepository.findByBook_Id(request.getBookId())
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Không tìm thấy tồn kho cho sách id: " + request.getBookId()));
 
-    public InventoryResponse getInventoryByBookId(Long id) {
-        Inventory inventory = inventoryRepository.findByBook_Id(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tồn kho cho sách có bookId: " + id));
-        return InventoryResponse.fromEntity(inventory);
+                if (inventory.getAvailableQuantity() < request.getQuantity()) {
+                        System.err.println("[BACKEND] Xuất kho thất bại do không đủ số lượng - bookId="
+                                        + request.getBookId()
+                                        + ", con=" + inventory.getAvailableQuantity() + ", yeuCau="
+                                        + request.getQuantity());
+                        throw new RuntimeException(
+                                        "Số lượng sách trong kho không đủ (còn "
+                                                        + inventory.getAvailableQuantity() + " cuốn)");
+                }
 
-    }
+                int newAvailable = inventory.getAvailableQuantity() - request.getQuantity();
+                inventory.setAvailableQuantity(newAvailable);
+                inventory.setChangeType(Inventory.EXPORT);
+                inventory.setUpdatedAt(LocalDateTime.now());
+                inventoryRepository.save(inventory);
 
-    public List<InventoryLogResponse> getAllInventoryLog() {
-        List<InventoryLog> inventoryLog = inventoryLogRepository.findAllByOrderByCreatedAtDesc();
-        List<InventoryLogResponse> listInventoryLogResponses = new ArrayList<>();
-        for (InventoryLog x : inventoryLog) {
-            listInventoryLogResponses.add(InventoryLogResponse.fromEntity(x));
+                inventoryLogRepository.save(InventoryLog.builder()
+                                .book(inventory.getBook())
+                                .changeType(InventoryLog.EXPORT)
+                                .quantityChanged(-request.getQuantity())
+                                .totalAfter(inventory.getTotalQuantity())
+                                .availableAfter(newAvailable)
+                                .note(request.getNote())
+                                .createdAt(LocalDateTime.now())
+                                .build());
+
+                System.out.println("[BACKEND] Xuất kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
+                                + newAvailable);
+
+                return InventoryResponse.fromEntity(inventory);
         }
 
-        return listInventoryLogResponses;
-    }
+        // Nhập kho: tăng available (khi người dùng trả sách)
+        @CacheEvict(value = "inventory", allEntries = true)
+        @Transactional
+        public InventoryResponse increaseInventory(InventoryRequest request) {
+                log.info("[Cache EVICT] increaseInventory - clearing all inventory cache");
+                System.out.println("[BACKEND] Bắt đầu tăng tồn kho - bookId=" + request.getBookId() + ", quantity="
+                                + request.getQuantity());
+                Inventory inventory = inventoryRepository.findByBook_Id(request.getBookId())
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Không tìm thấy tồn kho cho sách id: " + request.getBookId()));
 
-    public List<InventoryLogResponse> getAllInventoryLogByBookId(Long id) {
-        if (!bookRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy sách với id: " + id);
-        }
-        List<InventoryLog> inventoryLog = inventoryLogRepository.findByBook_IdOrderByCreatedAtDesc(id);
-        List<InventoryLogResponse> listInventoryLogResponses = new ArrayList<>();
-        for (InventoryLog x : inventoryLog) {
-            listInventoryLogResponses.add(InventoryLogResponse.fromEntity(x));
+                int newAvailable = inventory.getAvailableQuantity() + request.getQuantity();
+                inventory.setAvailableQuantity(newAvailable);
+                inventory.setChangeType(Inventory.IMPORT);
+                inventory.setUpdatedAt(LocalDateTime.now());
+                inventoryRepository.save(inventory);
+
+                inventoryLogRepository.save(InventoryLog.builder()
+                                .book(inventory.getBook())
+                                .changeType(InventoryLog.IMPORT)
+                                .quantityChanged(request.getQuantity())
+                                .totalAfter(inventory.getTotalQuantity())
+                                .availableAfter(newAvailable)
+                                .note(request.getNote())
+                                .createdAt(LocalDateTime.now())
+                                .build());
+
+                System.out.println("[BACKEND] Tăng tồn kho thành công - bookId=" + request.getBookId() + ", tonKhaDung="
+                                + newAvailable);
+
+                return InventoryResponse.fromEntity(inventory);
         }
 
-        return listInventoryLogResponses;
-    }
+        @Cacheable(value = "inventory", key = "'inventory_all'")
+        public List<InventoryResponse> getAllInventory() {
+                log.info("[Cache MISS] getAllInventory - fetching from DB");
+                List<Inventory> listInventory = inventoryRepository.findAll();
+
+                List<InventoryResponse> listInventoryResponses = new ArrayList<>();
+                for (Inventory x : listInventory) {
+                        listInventoryResponses.add(InventoryResponse.fromEntity(x));
+                }
+
+                return listInventoryResponses;
+        }
+
+        @Cacheable(value = "inventory", key = "'inventory_book_' + #id")
+        public InventoryResponse getInventoryByBookId(Long id) {
+                log.info("[Cache MISS] getInventoryByBookId(id={}) - fetching from DB", id);
+                Inventory inventory = inventoryRepository.findByBook_Id(id)
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Không tìm thấy tồn kho cho sách có bookId: " + id));
+                return InventoryResponse.fromEntity(inventory);
+
+        }
+
+        public List<InventoryLogResponse> getAllInventoryLog() {
+                List<InventoryLog> inventoryLog = inventoryLogRepository.findAllByOrderByCreatedAtDesc();
+                List<InventoryLogResponse> listInventoryLogResponses = new ArrayList<>();
+                for (InventoryLog x : inventoryLog) {
+                        listInventoryLogResponses.add(InventoryLogResponse.fromEntity(x));
+                }
+
+                return listInventoryLogResponses;
+        }
+
+        public List<InventoryLogResponse> getAllInventoryLogByBookId(Long id) {
+                if (!bookRepository.existsById(id)) {
+                        throw new RuntimeException("Không tìm thấy sách với id: " + id);
+                }
+                List<InventoryLog> inventoryLog = inventoryLogRepository.findByBook_IdOrderByCreatedAtDesc(id);
+                List<InventoryLogResponse> listInventoryLogResponses = new ArrayList<>();
+                for (InventoryLog x : inventoryLog) {
+                        listInventoryLogResponses.add(InventoryLogResponse.fromEntity(x));
+                }
+
+                return listInventoryLogResponses;
+        }
 }

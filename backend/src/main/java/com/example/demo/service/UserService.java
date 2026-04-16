@@ -3,6 +3,9 @@ package com.example.demo.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,16 +26,21 @@ import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "user_profiles")
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final BorrowRecordRepository borrowRecordRepository;
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public UserResponse register(UserRequest userRequest) {
+        log.info("[Cache EVICT] register - clearing user profiles cache");
         System.out.println("[BACKEND] Bắt đầu đăng ký người dùng - username=" + userRequest.getUsername());
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             System.err.println("[BACKEND] Đăng ký thất bại do email đã tồn tại - email=" + userRequest.getEmail());
@@ -84,13 +92,17 @@ public class UserService implements UserDetailsService {
         return UserResponse.fromEntity(user);
     }
 
+    @Cacheable(value = "user_profiles", key = "'user_profile_' + #name")
     public UserResponse getCurrentUserProfile(String name) {
+        log.info("[Cache MISS] getCurrentUserProfile(name={}) - fetching from DB", name);
         User user = userRepository.findByUsername(name)
                 .orElseThrow(() -> new RuntimeException("Không thể tim thấy user"));
         return UserResponse.fromEntity(user);
     }
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public UserResponse updateCurrentUserProfile(String username, ProfileUpdateRequest profileUpdateRequest) {
+        log.info("[Cache EVICT] updateCurrentUserProfile(username={}) - clearing user profiles cache", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
         if (userRepository.existsByEmail(profileUpdateRequest.getEmail())
@@ -116,7 +128,9 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
+    @Cacheable(value = "user_profiles", key = "'user_profile_' + #username")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("[Cache MISS] loadUserByUsername(username={}) - fetching from DB", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user: " + username));
         return new org.springframework.security.core.userdetails.User(
@@ -127,7 +141,9 @@ public class UserService implements UserDetailsService {
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName())));
     }
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public UserResponse createUser(UserRequest userRequest) {
+        log.info("[Cache EVICT] createUser - clearing user profiles cache");
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
@@ -156,7 +172,9 @@ public class UserService implements UserDetailsService {
         return UserResponse.fromEntity(user);
     }
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public UserResponse updateUserById(Long id, UserRequest userRequest) {
+        log.info("[Cache EVICT] updateUserById(id={}) - clearing user profiles cache", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
         if (userRequest.getUsername() != null && !user.getUsername().equals(userRequest.getUsername()) &&
@@ -197,7 +215,9 @@ public class UserService implements UserDetailsService {
         return UserResponse.fromEntity(updatedUser);
     }
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public UserResponse updateStatusUserById(Long id, UserStatusUpdateRequest userStatusUpdateRequest) {
+        log.info("[Cache EVICT] updateStatusUserById(id={}) - clearing user profiles cache", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
         user.setActive(userStatusUpdateRequest.getIsActive());
@@ -206,7 +226,9 @@ public class UserService implements UserDetailsService {
         return UserResponse.fromEntity(user);
     }
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public void changePassword(String username, ChangePasswordRequest request) {
+        log.info("[Cache EVICT] changePassword(username={}) - clearing user profiles cache", username);
         System.out.println("[BACKEND] Bắt đầu đổi mật khẩu - username=" + username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
@@ -221,7 +243,9 @@ public class UserService implements UserDetailsService {
         System.out.println("[BACKEND] Đổi mật khẩu thành công - username=" + username);
     }
 
+    @CacheEvict(value = "user_profiles", allEntries = true)
     public void deleteUserById(Long id) {
+        log.info("[Cache EVICT] deleteUserById(id={}) - clearing user profiles cache", id);
         System.out.println("[BACKEND] Bắt đầu xóa người dùng - userId=" + id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
