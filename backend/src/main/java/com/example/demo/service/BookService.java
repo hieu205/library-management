@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +26,12 @@ import com.example.demo.repository.BorrowItemRepository;
 import com.example.demo.repository.CategoryRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = { "books", "book_search" })
 public class BookService {
 
     private final BookRepository bookRepository;
@@ -36,8 +42,10 @@ public class BookService {
     private final InventoryService inventoryService;
     private final BookImageService bookImageService;
 
+    @CacheEvict(value = { "books", "book_search" }, allEntries = true)
     @Transactional
     public BookResponse createBook(BookRequest request) {
+        log.info("[Cache EVICT] createBook - clearing all books and search cache");
         System.out.println("[BACKEND] Bắt đầu tạo sách mới - title=" + request.getTitle());
         if (request.getIsbn() != null && !request.getIsbn().isBlank()
                 && bookRepository.existsByIsbn(request.getIsbn())) {
@@ -97,8 +105,10 @@ public class BookService {
         return BookResponse.fromEntity(book);
     }
 
+    @CacheEvict(value = { "books", "book_search" }, allEntries = true)
     @Transactional
     public BookResponse updateBookById(Long id, BookRequest request) {
+        log.info("[Cache EVICT] updateBookById(id={}) - clearing all books and search cache", id);
         System.out.println("[BACKEND] Bắt đầu cập nhật sách - bookId=" + id);
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với id: " + id));
@@ -165,8 +175,10 @@ public class BookService {
         return BookResponse.fromEntity(book);
     }
 
+    @CacheEvict(value = { "books", "book_search" }, allEntries = true)
     @Transactional
     public void deleteBookById(Long id) {
+        log.info("[Cache EVICT] deleteBookById(id={}) - clearing all books and search cache", id);
         System.out.println("[BACKEND] Bắt đầu xóa sách - bookId=" + id);
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với id: " + id));
@@ -182,7 +194,9 @@ public class BookService {
         System.out.println("[BACKEND] Xóa sách thành công - bookId=" + id);
     }
 
+    @Cacheable(value = "books", key = "'book_all'")
     public List<BookResponse> getAllBook() {
+        log.info("[Cache MISS] getAllBook - fetching from DB");
         List<Book> listBookResponse = bookRepository.findAll();
 
         List<BookResponse> res = new ArrayList<>();
@@ -192,7 +206,9 @@ public class BookService {
         return res;
     }
 
+    @Cacheable(value = "books", key = "'book_' + #id")
     public BookResponse getBookById(Long id) {
+        log.info("[Cache MISS] getBookById(id={}) - fetching from DB", id);
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Khong tim thay book co id " + id));
         return BookResponse.fromEntity(book);
@@ -221,8 +237,10 @@ public class BookService {
         return BookResponse.fromEntity(book);
     }
 
+    @Cacheable(value = "book_search", key = "'search_' + #keyword")
     @Transactional(readOnly = true)
     public List<BookResponse> searchBook(String keyword) {
+        log.info("[Cache MISS] searchBook(keyword={}) - fetching from DB", keyword);
         if (keyword == null || keyword.isBlank()) {
             throw new RuntimeException("Từ khóa tìm kiếm không được để trống");
         }
@@ -232,8 +250,10 @@ public class BookService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "books", key = "'book_author_' + #authorId")
     @Transactional(readOnly = true)
     public List<BookResponse> getBooksByAuthorId(Long authorId) {
+        log.info("[Cache MISS] getBooksByAuthorId(authorId={}) - fetching from DB", authorId);
         if (!authorRepository.existsById(authorId)) {
             throw new RuntimeException("Không tìm thấy tác giả với id: " + authorId);
         }
