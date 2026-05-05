@@ -8,7 +8,7 @@ import {
 import { Toaster } from 'react-hot-toast';
 
 export default function Layout() {
-    const { user, logout, isAdmin, isLibrarian, isAuthenticated } = useAuth();
+    const { user, logout, isAdmin, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -20,17 +20,17 @@ export default function Layout() {
     const navItems = [
         { to: '/', icon: <IoLibrary />, label: 'Thư viện sách' },
         ...(isAuthenticated && isAdmin ? [{ to: '/dashboard', icon: <IoGrid />, label: 'Dashboard' }] : []),
-        ...(isAuthenticated && (isAdmin || isLibrarian)
+        ...(isAuthenticated && isAdmin
             ? [{ to: '/books/manage', icon: <IoBookSharp />, label: 'Quản lý sách' }]
             : []),
-        ...(isAuthenticated && (isAdmin || isLibrarian)
+        ...(isAuthenticated && isAdmin
             ? [
                 { to: '/authors', icon: <IoPerson />, label: 'Tác giả' },
                 { to: '/categories', icon: <IoLayers />, label: 'Thể loại' },
             ]
             : []),
-        ...(isAdmin || isLibrarian ? [{ to: '/inventory', icon: <IoArchive />, label: 'Kho sách' }] : []),
-        ...(isAuthenticated && (isAdmin || isLibrarian)
+        ...(isAdmin ? [{ to: '/inventory', icon: <IoArchive />, label: 'Kho sách' }] : []),
+        ...(isAuthenticated && isAdmin
             ? [{ to: '/borrow', icon: <IoSwapHorizontal />, label: 'Mượn / Trả' }]
             : []),
         ...(isAdmin ? [{ to: '/users', icon: <IoPeople />, label: 'Người dùng' }] : []),

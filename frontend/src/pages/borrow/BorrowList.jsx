@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
 export default function BorrowList() {
-    const { isAdmin, isLibrarian, user } = useAuth();
-    const canManage = isAdmin || isLibrarian;
+    const { isAdmin, user } = useAuth();
+    const canManage = isAdmin;
     const [borrows, setBorrows] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
     const [myRequests, setMyRequests] = useState([]);

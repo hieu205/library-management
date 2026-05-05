@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AuthorList() {
-    const { isAdmin, isLibrarian } = useAuth();
-    const canManage = isAdmin || isLibrarian;
+    const { isAdmin } = useAuth();
+    const canManage = isAdmin;
     const [authors, setAuthors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);

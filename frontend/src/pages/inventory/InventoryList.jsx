@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
 export default function InventoryList() {
-    const { isAdmin, isLibrarian } = useAuth();
-    const canManage = isAdmin || isLibrarian;
+    const { isAdmin } = useAuth();
+    const canManage = isAdmin;
     const [inventory, setInventory] = useState([]);
     const [logs, setLogs] = useState([]);
     const [books, setBooks] = useState([]);
