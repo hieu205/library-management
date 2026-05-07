@@ -27,6 +27,8 @@ import com.example.demo.repository.CategoryRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -40,6 +42,7 @@ public class BookService {
     private final BorrowItemRepository borrowItemRepository;
     private final BookAuthorRepository bookAuthorRepository;
     private final InventoryService inventoryService;
+    private final com.example.demo.repository.InventoryRepository inventoryRepository;
     private final BookImageService bookImageService;
 
     @CacheEvict(value = { "books", "book_search" }, allEntries = true)
@@ -181,14 +184,29 @@ public class BookService {
         log.info("[Cache EVICT] deleteBookById(id={}) - clearing all books and search cache", id);
         System.out.println("[BACKEND] Bắt đầu xóa sách - bookId=" + id);
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sách với id: " + id));
-
-        // nếu xóa sách đang được mượn đi thì lúc trả sẽ không thể biết được sách đó là
-        // sách nào trong list<book> của cửa hàng
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sách với id: " + id));
+        // nếu còn bản ghi mượn active thì không cho xóa
         if (borrowItemRepository.existsActiveBorrowByBookId(id)) {
             System.err.println("[BACKEND] Không thể xóa sách vì đang được mượn - bookId=" + id);
-            throw new RuntimeException("Không thể xóa sách đang được mượn");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Không thể xóa sách đang được mượn");
         }
+
+        // kiểm tra tồn kho: nếu tồn kho tồn tại nhưng còn số lượng -> cấm xóa
+        inventoryRepository.findByBook_Id(id).ifPresent(inventory -> {
+            Integer total = inventory.getTotalQuantity() == null ? 0 : inventory.getTotalQuantity();
+            Integer available = inventory.getAvailableQuantity() == null ? 0 : inventory.getAvailableQuantity();
+            if (total > 0 || available > 0) {
+                System.err.println("[BACKEND] Không thể xóa sách vì tồn kho không rỗng - bookId=" + id
+                        + ", total=" + total + ", available=" + available);
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Không thể xóa sách vì tồn kho còn sách (total=" + total + ", available=" + available + ")");
+            }
+
+            // nếu tồn kho = 0 thì xóa bản ghi inventory trước để tránh FK constraint
+            inventoryRepository.delete(inventory);
+            System.out.println("[BACKEND] Đã xóa bản ghi inventory cho sách - bookId=" + id);
+        });
 
         bookRepository.delete(book);
         System.out.println("[BACKEND] Xóa sách thành công - bookId=" + id);
