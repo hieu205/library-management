@@ -128,10 +128,18 @@ export default function BookList() {
             toast.success('Xóa sách thành công!');
             loadData();
         } catch (err) {
-            if (err.response?.status === 403) {
+            const status = err.response?.status;
+            if (status === 403) {
                 toast.error('Bạn không có quyền xóa sách (chỉ ADMIN).');
                 return;
             }
+
+            if (status === 409) {
+                // Conflict: inventory not empty or active borrows
+                toast.error(err.response?.data?.message || 'Không thể xóa sách do tồn kho/đang được mượn.');
+                return;
+            }
+
             toast.error(err.response?.data?.message || 'Xóa thất bại!');
         }
     };
