@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { IoAdd, IoEye, IoReturnUpBack, IoCheckmark, IoClose } from 'react-icons/io5';
-import { borrowService, bookService } from '../../services/api';
+import { borrowService, bookService, userService } from '../../services/api';
 import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -12,9 +12,11 @@ export default function BorrowList() {
     const [pendingRequests, setPendingRequests] = useState([]);
     const [myRequests, setMyRequests] = useState([]);
     const [books, setBooks] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'my-requests'
     const [statusFilter, setStatusFilter] = useState('all');
+    const [borrowerNameFilter, setBorrowerNameFilter] = useState('');
     const [fromDateFilter, setFromDateFilter] = useState('');
     const [toDateFilter, setToDateFilter] = useState('');
     
@@ -28,7 +30,7 @@ export default function BorrowList() {
     const [decisionAction, setDecisionAction] = useState(null); // 'approve' or 'reject'
 
     // Borrow form (for admin creating borrow directly)
-    const [borrowForm, setBorrowForm] = useState({ items: [{ bookId: '', quantity: 1 }], dueDate: '' });
+    const [borrowForm, setBorrowForm] = useState({ userId: '', items: [{ bookId: '', quantity: 1 }], dueDate: '', adminNote: '' });
     // Request form (for user requesting to borrow)
     const [requestForm, setRequestForm] = useState({ items: [{ bookId: '', quantity: 1 }], dueDate: '' });
     // Return form
@@ -64,6 +66,15 @@ export default function BorrowList() {
             setBooks(booksRes.data.data || []);
             setPendingRequests(pendingRes.data.data || []);
             setMyRequests(myReqRes.data.data || []);
+            // load users for admin when creating borrow
+            if (canManage) {
+                try {
+                    const usersRes = await userService.getAll();
+                    setUsers(usersRes.data.data || []);
+                } catch (e) {
+                    setUsers([]);
+                }
+            }
         } catch { toast.error('Không thể tải dữ liệu'); }
         finally { setLoading(false); }
     };
@@ -89,14 +100,16 @@ export default function BorrowList() {
     const handleBorrow = async (e) => {
         e.preventDefault();
         const payload = {
+            userId: borrowForm.userId ? parseInt(borrowForm.userId) : null,
             items: borrowForm.items.map((i) => ({ bookId: parseInt(i.bookId), quantity: parseInt(i.quantity) })),
             dueDate: borrowForm.dueDate || null,
+            adminNote: borrowForm.adminNote || null,
         };
         try {
             await borrowService.create(payload);
             toast.success('Mượn sách thành công!');
             setBorrowModal(false);
-            setBorrowForm({ items: [{ bookId: '', quantity: 1 }], dueDate: '' });
+            setBorrowForm({ userId: '', items: [{ bookId: '', quantity: 1 }], dueDate: '', adminNote: '' });
             loadData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Mượn sách thất bại!');
@@ -288,9 +301,33 @@ export default function BorrowList() {
         return Number.isNaN(date.getTime()) ? null : date;
     };
 
+    const getBorrowerName = (record) => {
+        if (!record) return '';
+        const normalizedRecordUsername = (record.username || '').trim().toLowerCase();
+        const matchedUser = users.find((u) => {
+            if (record.userId && u.id === record.userId) return true;
+            const normalizedUserUsername = (u.username || '').trim().toLowerCase();
+            return normalizedRecordUsername && normalizedUserUsername === normalizedRecordUsername;
+        });
+
+        const userFullName = (matchedUser?.fullName || '').trim();
+        if (userFullName) return userFullName;
+
+        const recordFullName = (record.fullName || '').trim();
+        if (recordFullName) return recordFullName;
+
+        return record.username || '';
+    };
+
     const rawDisplayData = getDisplayData();
     const displayData = rawDisplayData.filter((b) => {
         if (statusFilter !== 'all' && b.record.status !== statusFilter) {
+            return false;
+        }
+
+        const borrowerName = getBorrowerName(b.record).toLowerCase();
+        const borrowerKeyword = borrowerNameFilter.trim().toLowerCase();
+        if (borrowerKeyword && !borrowerName.includes(borrowerKeyword)) {
             return false;
         }
 
@@ -315,7 +352,7 @@ export default function BorrowList() {
                     <h1 className="page-title">Mượn / Trả sách</h1>
                     <p className="page-title-sub">{borrows.length} phiếu mượn</p>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="page-actions">
                     {!canManage && (
                         <button className="btn btn-primary" onClick={() => setRequestModal(true)}>
                             <IoAdd /> Gửi yêu cầu mượn
@@ -330,33 +367,17 @@ export default function BorrowList() {
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+            <div className="tabs mb-lg">
                 <button
                     onClick={() => setActiveTab('all')}
-                    style={{
-                        padding: '8px 16px',
-                        background: activeTab === 'all' ? 'var(--primary)' : 'transparent',
-                        color: activeTab === 'all' ? 'white' : 'var(--text-secondary)',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontWeight: activeTab === 'all' ? '600' : '400',
-                    }}
+                    className={`tab ${activeTab === 'all' ? 'active' : ''}`}
                 >
                     Tất cả phiếu ({borrows.length})
                 </button>
                 {canManage && (
                     <button
                         onClick={() => setActiveTab('pending')}
-                        style={{
-                            padding: '8px 16px',
-                            background: activeTab === 'pending' ? 'var(--primary)' : 'transparent',
-                            color: activeTab === 'pending' ? 'white' : 'var(--text-secondary)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: activeTab === 'pending' ? '600' : '400',
-                        }}
+                        className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
                     >
                         Chờ duyệt ({pendingRequests.length})
                     </button>
@@ -364,15 +385,7 @@ export default function BorrowList() {
                 {!canManage && (
                     <button
                         onClick={() => setActiveTab('my-requests')}
-                        style={{
-                            padding: '8px 16px',
-                            background: activeTab === 'my-requests' ? 'var(--primary)' : 'transparent',
-                            color: activeTab === 'my-requests' ? 'white' : 'var(--text-secondary)',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: activeTab === 'my-requests' ? '600' : '400',
-                        }}
+                        className={`tab ${activeTab === 'my-requests' ? 'active' : ''}`}
                     >
                         Yêu cầu của tôi ({myRequests.length})
                     </button>
@@ -380,51 +393,59 @@ export default function BorrowList() {
             </div>
 
             {canManage && (
-                <div className="table-wrapper" style={{ marginBottom: '16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto auto auto', gap: '12px', alignItems: 'end' }}>
-                        <label style={{ fontSize: '1rem', fontWeight: '600', color: '#546e7a' }}>Bộ lọc:</label>
-                        <select
-                            className="form-control"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="all">Tất cả trạng thái</option>
-                            <option value="PENDING">Chờ duyệt</option>
-                            <option value="BORROWING">Đang mượn</option>
-                            <option value="RETURNED">Đã trả</option>
-                            <option value="REJECTED">Bị từ chối</option>
-                        </select>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.85rem', color: '#546e7a' }}>Từ:</span>
-                            <input
-                                type="date"
+                <div className="table-wrapper mb-md">
+                    <div className="filters-bar">
+                        <div className="filters-row">
+                            <select
                                 className="form-control"
-                                style={{ minWidth: '140px' }}
-                                value={fromDateFilter}
-                                onChange={(e) => setFromDateFilter(e.target.value)}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.85rem', color: '#546e7a' }}>Đến:</span>
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="PENDING">Chờ duyệt</option>
+                                <option value="BORROWING">Đang mượn</option>
+                                <option value="RETURNED">Đã trả</option>
+                                <option value="REJECTED">Bị từ chối</option>
+                            </select>
                             <input
-                                type="date"
+                                type="text"
                                 className="form-control"
-                                style={{ minWidth: '140px' }}
-                                value={toDateFilter}
-                                onChange={(e) => setToDateFilter(e.target.value)}
+                                placeholder="Lọc theo họ và tên người mượn"
+                                value={borrowerNameFilter}
+                                onChange={(e) => setBorrowerNameFilter(e.target.value)}
                             />
+                            <div className="inline-field">
+                                <span className="inline-field-label">Từ</span>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    value={fromDateFilter}
+                                    onChange={(e) => setFromDateFilter(e.target.value)}
+                                />
+                                <span className="inline-field-label">Đến</span>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    value={toDateFilter}
+                                    onChange={(e) => setToDateFilter(e.target.value)}
+                                />
+                            </div>
                         </div>
-                        <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => {
-                                setStatusFilter('all');
-                                setFromDateFilter('');
-                                setToDateFilter('');
-                            }}
-                        >
-                            Xóa lọc
-                        </button>
+
+                        <div className="filters-actions">
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                    setStatusFilter('all');
+                                    setBorrowerNameFilter('');
+                                    setFromDateFilter('');
+                                    setToDateFilter('');
+                                }}
+                            >
+                                Xóa lọc
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -453,7 +474,7 @@ export default function BorrowList() {
                             ) : displayData.map((b) => (
                                 <tr key={b.record.id}>
                                     <td>#{b.record.id}</td>
-                                    <td><strong>{b.record.username}</strong></td>
+                                    <td><strong>{getBorrowerName(b.record)}</strong></td>
                                     <td>{b.record.borrowDate}</td>
                                     <td>{b.record.dueDate || '-'}</td>
                                     <td>{getStatusBadge(b.record.status)}</td>
@@ -534,6 +555,20 @@ export default function BorrowList() {
             <Modal isOpen={borrowModal && canManage} onClose={() => setBorrowModal(false)} title="Tạo phiếu mượn" size="lg">
                 <form onSubmit={handleBorrow}>
                     <div className="form-group">
+                        <label>Người mượn</label>
+                        <select
+                            className="form-control"
+                            required
+                            value={borrowForm.userId}
+                            onChange={(e) => setBorrowForm({ ...borrowForm, userId: e.target.value })}
+                        >
+                            <option value="">-- Chọn người dùng --</option>
+                            {users.map((u) => (
+                                <option key={u.id} value={u.id}>{u.fullName || u.username}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="form-group">
                         <label>Ngày hạn trả (tùy chọn, mặc định 14 ngày)</label>
                         <input 
                             type="date" 
@@ -579,6 +614,17 @@ export default function BorrowList() {
                         <button type="button" className="btn btn-secondary btn-sm" onClick={addBorrowItem}>
                             <IoAdd /> Thêm sách
                         </button>
+                    </div>
+                    <div className="form-group">
+                        <label>Ghi chú từ admin (tùy chọn)</label>
+                        <textarea
+                            className="form-control"
+                            rows="3"
+                            placeholder="Ghi chú (tối đa 500 ký tự)"
+                            value={borrowForm.adminNote}
+                            onChange={(e) => setBorrowForm({ ...borrowForm, adminNote: e.target.value.slice(0, 500) })}
+                            maxLength={500}
+                        />
                     </div>
                     <div className="form-actions">
                         <button type="button" className="btn btn-secondary" onClick={() => setBorrowModal(false)}>Hủy</button>
@@ -648,7 +694,7 @@ export default function BorrowList() {
             <Modal isOpen={returnModal && canManage} onClose={() => setReturnModal(false)} title="Trả sách" size="md">
                 <form onSubmit={handleReturn}>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                        Phiếu mượn #{selectedBorrow?.record?.id} - {selectedBorrow?.record?.username}
+                        Phiếu mượn #{selectedBorrow?.record?.id} - {getBorrowerName(selectedBorrow?.record)}
                     </p>
                     {returnItems.map((item, idx) => (
                         <div key={idx} style={{
@@ -692,7 +738,7 @@ export default function BorrowList() {
                             </div>
                             <div className="detail-item">
                                 <div className="detail-label">Người mượn</div>
-                                <div className="detail-value">{selectedBorrow.record.username}</div>
+                                <div className="detail-value">{getBorrowerName(selectedBorrow.record)}</div>
                             </div>
                             <div className="detail-item">
                                 <div className="detail-label">Ngày mượn</div>
