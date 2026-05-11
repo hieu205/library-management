@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
 export default function CategoryList() {
-    const { isAdmin, isLibrarian } = useAuth();
-    const canManage = isAdmin || isLibrarian;
+    const { isAdmin } = useAuth();
+    const canManage = isAdmin;
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);

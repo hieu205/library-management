@@ -28,9 +28,9 @@ const features = [
 ];
 
 export default function BookCatalog() {
-    const { isAdmin, isLibrarian, isAuthenticated } = useAuth();
+    const { isAdmin, isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    const canManage = isAdmin || isLibrarian;
+    const canManage = isAdmin;
 
     const [allBooks, setAllBooks] = useState([]);
     const [authors, setAuthors] = useState([]);

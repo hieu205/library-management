@@ -46,7 +46,7 @@ export default function App() {
             <Route
               path="books/manage"
               element={
-                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                <RoleRoute allowedRoles={['ADMIN']}>
                   <BookList />
                 </RoleRoute>
               }
@@ -54,7 +54,7 @@ export default function App() {
             <Route
               path="authors"
               element={
-                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                <RoleRoute allowedRoles={['ADMIN']}>
                   <AuthorList />
                 </RoleRoute>
               }
@@ -62,7 +62,7 @@ export default function App() {
             <Route
               path="categories"
               element={
-                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                <RoleRoute allowedRoles={['ADMIN']}>
                   <CategoryList />
                 </RoleRoute>
               }
@@ -70,7 +70,7 @@ export default function App() {
             <Route
               path="inventory"
               element={
-                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                <RoleRoute allowedRoles={['ADMIN']}>
                   <InventoryList />
                 </RoleRoute>
               }
@@ -78,7 +78,7 @@ export default function App() {
             <Route
               path="borrow"
               element={
-                <RoleRoute allowedRoles={['ADMIN', 'LIBRARIAN']}>
+                <RoleRoute allowedRoles={['ADMIN']}>
                   <BorrowList />
                 </RoleRoute>
               }

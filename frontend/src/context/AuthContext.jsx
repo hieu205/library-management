@@ -65,7 +65,6 @@ export function AuthProvider({ children }) {
 
     const role = typeof user?.role === 'string' ? user.role : (user?.role?.name || null);
     const isAdmin = role === 'ADMIN';
-    const isLibrarian = role === 'LIBRARIAN';
     const isMember = role === 'USER';
 
     return (
@@ -80,7 +79,6 @@ export function AuthProvider({ children }) {
                 isAuthenticated: !!user,
                 role,
                 isAdmin,
-                isLibrarian,
                 isMember,
             }}
         >
