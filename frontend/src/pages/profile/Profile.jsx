@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
 import toast from 'react-hot-toast';
+import { getBorrowRecordStatusMeta } from '../../constants/borrowStatus';
 
 export default function Profile() {
     const { user, refreshProfile, logout } = useAuth();
@@ -77,9 +78,8 @@ export default function Profile() {
     };
 
     const getStatusBadge = (status) => {
-        if (status === 'BORROWING') return <span className="badge badge-orange">Đang mượn</span>;
-        if (status === 'RETURNED') return <span className="badge badge-green">Đã trả</span>;
-        return <span className="badge badge-purple">{status}</span>;
+        const { label, className } = getBorrowRecordStatusMeta(status);
+        return <span className={`badge ${className}`}>{label}</span>;
     };
 
     return (

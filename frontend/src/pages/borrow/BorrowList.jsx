@@ -4,6 +4,11 @@ import { borrowService, bookService, userService } from '../../services/api';
 import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import {
+    BORROW_RECORD_STATUS_FILTER_ORDER,
+    BORROW_RECORD_STATUS_LABELS,
+    getBorrowRecordStatusMeta,
+} from '../../constants/borrowStatus';
 
 export default function BorrowList() {
     const { isAdmin, user } = useAuth();
@@ -226,26 +231,20 @@ export default function BorrowList() {
     };
 
     const getStatusBadge = (status) => {
-        const statusMap = {
-            'PENDING': { label: 'Chờ duyệt', class: 'badge-purple' },
-            'APPROVED': { label: 'Đã duyệt', class: 'badge-blue' },
-            'REJECTED': { label: 'Bị từ chối', class: 'badge-red' },
-            'BORROWING': { label: 'Đang mượn', class: 'badge-orange' },
-            'RETURNED': { label: 'Đã trả', class: 'badge-green' },
-        };
-        const info = statusMap[status] || { label: status, class: 'badge-gray' };
-        return <span className={`badge ${info.class}`}>{info.label}</span>;
+        const { label, className } = getBorrowRecordStatusMeta(status);
+        return <span className={`badge ${className}`}>{label}</span>;
     };
 
     const getNextStatusOptions = (status) => {
+        const L = BORROW_RECORD_STATUS_LABELS;
         if (status === 'PENDING') {
             return [
-                { value: 'BORROWING', label: 'Duyệt -> Đang mượn' },
-                { value: 'REJECTED', label: 'Từ chối yêu cầu' },
+                { value: 'BORROWING', label: `Duyệt — ${L.BORROWING}` },
+                { value: 'REJECTED', label: 'Từ chối phiếu' },
             ];
         }
         if (status === 'BORROWING') {
-            return [{ value: 'RETURNED', label: 'Chuyển sang: Đã trả' }];
+            return [{ value: 'RETURNED', label: `Trả sách (${L.RETURNED})` }];
         }
         return [];
     };
@@ -402,10 +401,9 @@ export default function BorrowList() {
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
                                 <option value="all">Tất cả trạng thái</option>
-                                <option value="PENDING">Chờ duyệt</option>
-                                <option value="BORROWING">Đang mượn</option>
-                                <option value="RETURNED">Đã trả</option>
-                                <option value="REJECTED">Bị từ chối</option>
+                                {BORROW_RECORD_STATUS_FILTER_ORDER.map((s) => (
+                                    <option key={s} value={s}>{BORROW_RECORD_STATUS_LABELS[s]}</option>
+                                ))}
                             </select>
                             <input
                                 type="text"
