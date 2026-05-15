@@ -15,6 +15,8 @@ import com.example.demo.repository.TopBookProjection;
 public interface BorrowItemRepository extends JpaRepository<BorrowItem, Long> {
     List<BorrowItem> findByBorrowRecord_Id(Long borrowRecordId);
 
+    void deleteByBorrowRecord_Id(Long borrowRecordId);
+
     Optional<BorrowItem> findByBorrowRecord_IdAndBook_Id(Long borrowRecordId, Long bookId);
 
     @Query("SELECT COUNT(bi) > 0 FROM BorrowItem bi WHERE bi.book.id = :bookId AND bi.returnedQuantity < bi.quantity")

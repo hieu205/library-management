@@ -60,11 +60,10 @@ export default function UserList() {
             setModalOpen(false);
             loadData();
         } catch (err) {
-            const details = err.response?.data?.details;
-            const detailMessage = details
-                ? Object.values(details).join(' | ')
-                : null;
-            toast.error(detailMessage || err.response?.data?.message || 'Thao tác thất bại!');
+            const body = err.response?.data;
+            const details = body?.details;
+            const detailMessage = details ? Object.values(details).join(' | ') : null;
+            toast.error(detailMessage || body?.error || body?.message || 'Thao tác thất bại!');
         }
     };
 
@@ -75,11 +74,10 @@ export default function UserList() {
             toast.success(user.active ? 'Đã khóa tài khoản' : 'Đã mở khóa tài khoản');
             loadData();
         } catch (err) {
-            const details = err.response?.data?.details;
-            const detailMessage = details
-                ? Object.values(details).join(' | ')
-                : null;
-            toast.error(detailMessage || err.response?.data?.message || 'Thao tác thất bại!');
+            const body = err.response?.data;
+            const details = body?.details;
+            const detailMessage = details ? Object.values(details).join(' | ') : null;
+            toast.error(detailMessage || body?.error || body?.message || 'Thao tác thất bại!');
         }
     };
 
@@ -91,7 +89,8 @@ export default function UserList() {
             toast.success('Xóa người dùng thành công!');
             loadData();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Xóa thất bại!');
+            const body = err.response?.data;
+            toast.error(body?.error || body?.message || 'Xóa thất bại!');
         }
     };
 

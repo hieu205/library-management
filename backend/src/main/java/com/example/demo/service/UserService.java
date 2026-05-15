@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.request.ChangePasswordRequest;
 import com.example.demo.dto.request.LoginRequest;
@@ -19,9 +20,17 @@ import com.example.demo.dto.request.ProfileUpdateRequest;
 import com.example.demo.dto.request.UserRequest;
 import com.example.demo.dto.request.UserStatusUpdateRequest;
 import com.example.demo.dto.response.UserResponse;
+import com.example.demo.entity.BorrowItem;
+import com.example.demo.entity.BorrowRecord;
+import com.example.demo.entity.Inventory;
+import com.example.demo.entity.InventoryLog;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
+import com.example.demo.repository.AuthTokenRepository;
+import com.example.demo.repository.BorrowItemRepository;
 import com.example.demo.repository.BorrowRecordRepository;
+import com.example.demo.repository.InventoryLogRepository;
+import com.example.demo.repository.InventoryRepository;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 
@@ -33,10 +42,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "user_profiles")
 public class UserService implements UserDetailsService {
+    private static final String BORROW_STATUS_BORROWING = "BORROWING";
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final BorrowRecordRepository borrowRecordRepository;
+    private final BorrowItemRepository borrowItemRepository;
+    private final InventoryRepository inventoryRepository;
+    private final InventoryLogRepository inventoryLogRepository;
+    private final AuthTokenRepository authTokenRepository;
 
     @CacheEvict(value = "user_profiles", allEntries = true)
     public UserResponse register(UserRequest userRequest) {
@@ -77,11 +92,6 @@ public class UserService implements UserDetailsService {
         System.out.println("[BACKEND] Bắt đầu đăng nhập - username=" + loginRequest.getUsername());
         User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new RuntimeException("Tên đăng nhập không đúng"));
-        if (!user.isActive()) {
-            System.err.println(
-                    "[BACKEND] Đăng nhập thất bại do tài khoản bị khóa - username=" + loginRequest.getUsername());
-            throw new RuntimeException("Tài khoản đã bị khóa");
-        }
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             System.err.println(
                     "[BACKEND] Đăng nhập thất bại do sai mật khẩu - username=" + loginRequest.getUsername());
@@ -128,15 +138,14 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    @Cacheable(value = "user_profiles", key = "'user_profile_' + #username")
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("[Cache MISS] loadUserByUsername(username={}) - fetching from DB", username);
+        log.info("[UserDetails] loadUserByUsername(username={}) - always from DB (no cache: tránh stale khi khóa/mở tài khoản)", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user: " + username));
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                user.isActive(),
+                true,
                 true, true, true,
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName())));
     }
@@ -220,7 +229,8 @@ public class UserService implements UserDetailsService {
         log.info("[Cache EVICT] updateStatusUserById(id={}) - clearing user profiles cache", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
-        user.setActive(userStatusUpdateRequest.getIsActive());
+        boolean active = Boolean.TRUE.equals(userStatusUpdateRequest.getIsActive());
+        user.setActive(active);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
         return UserResponse.fromEntity(user);
@@ -243,16 +253,55 @@ public class UserService implements UserDetailsService {
         System.out.println("[BACKEND] Đổi mật khẩu thành công - username=" + username);
     }
 
-    @CacheEvict(value = "user_profiles", allEntries = true)
-    public void deleteUserById(Long id) {
-        log.info("[Cache EVICT] deleteUserById(id={}) - clearing user profiles cache", id);
+    @Transactional
+    @CacheEvict(value = { "user_profiles", "borrow_pending", "borrow_history", "inventory" }, allEntries = true)
+    public void deleteUserById(Long id, String actingUsername) {
+        log.info("[Cache EVICT] deleteUserById(id={}) - clearing user + borrow + inventory caches", id);
         System.out.println("[BACKEND] Bắt đầu xóa người dùng - userId=" + id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy User có id là: " + id));
-        if (borrowRecordRepository.existsByUser_Id(id)) {
-            System.err.println("[BACKEND] Không thể xóa user vì đã có lịch sử mượn sách - userId=" + id);
-            throw new RuntimeException("Không thể xóa user vì đã có lịch sử mượn sách");
+        if (actingUsername != null && actingUsername.equals(user.getUsername())) {
+            throw new RuntimeException("Không thể xóa tài khoản đang đăng nhập");
         }
+
+        List<BorrowRecord> records = borrowRecordRepository.findByUser_IdOrderByCreatedAtDesc(id);
+        for (BorrowRecord record : records) {
+            if (!BORROW_STATUS_BORROWING.equals(record.getStatus())) {
+                continue;
+            }
+            List<BorrowItem> items = borrowItemRepository.findByBorrowRecord_Id(record.getId());
+            for (BorrowItem item : items) {
+                int returned = item.getReturnedQuantity() != null ? item.getReturnedQuantity() : 0;
+                int stillOut = item.getQuantity() - returned;
+                if (stillOut <= 0) {
+                    continue;
+                }
+                Long bookId = item.getBook().getId();
+                Inventory inventory = inventoryRepository.findByBook_Id(bookId)
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tồn kho cho sách id: " + bookId));
+                int newAvailable = inventory.getAvailableQuantity() + stillOut;
+                inventory.setAvailableQuantity(newAvailable);
+                inventory.setChangeType("RETURN");
+                inventory.setUpdatedAt(LocalDateTime.now());
+                inventoryRepository.save(inventory);
+                inventoryLogRepository.save(InventoryLog.builder()
+                        .book(item.getBook())
+                        .changeType("RETURN")
+                        .quantityChanged(stillOut)
+                        .totalAfter(inventory.getTotalQuantity())
+                        .availableAfter(newAvailable)
+                        .note("Hoàn kho do xóa user id=" + id + ", phiếu mượn id=" + record.getId())
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
+        }
+
+        for (BorrowRecord record : records) {
+            borrowItemRepository.deleteByBorrowRecord_Id(record.getId());
+        }
+        borrowRecordRepository.deleteAll(records);
+
+        authTokenRepository.deleteByUser_Id(id);
         userRepository.delete(user);
         System.out.println("[BACKEND] Xóa người dùng thành công - userId=" + id);
     }

@@ -30,10 +30,6 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-        if (!user.isActive()) {
-            throw new RuntimeException("Tài khoản đã bị khóa");
-        }
-
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
@@ -59,10 +55,6 @@ public class AuthService {
         String username = jwtService.extractUsername(refreshToken);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-
-        if (!user.isActive()) {
-            throw new RuntimeException("Tài khoản đã bị khóa");
-        }
 
         if (!jwtService.isTokenValid(refreshToken, username)) {
             throw new RuntimeException("Refresh token đã hết hạn hoặc không hợp lệ");

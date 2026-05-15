@@ -20,7 +20,7 @@ export default function Login() {
             toast.success('Đăng nhập thành công!');
             navigate('/');
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Đăng nhập thất bại!');
+            toast.error(err.response?.data?.error || err.response?.data?.message || 'Đăng nhập thất bại!');
         } finally {
             setLoading(false);
         }

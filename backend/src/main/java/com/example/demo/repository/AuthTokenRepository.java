@@ -11,4 +11,6 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
     Optional<AuthToken> findByTokenHashAndRevokedFalse(String tokenHash);
 
     List<AuthToken> findByUser_IdAndRevokedFalse(Long userId);
+
+    void deleteByUser_Id(Long userId);
 }

@@ -233,9 +233,9 @@ public class UserController {
 
         // xóa user theo id (chỉ admin)
         @DeleteMapping("/{id}")
-        public ResponseEntity<ApiResponse<Void>> deleteUserById(@PathVariable Long id) {
+        public ResponseEntity<ApiResponse<Void>> deleteUserById(@PathVariable Long id, Authentication authentication) {
                 System.out.println("[BACKEND] API admin xóa người dùng - userId=" + id);
-                userService.deleteUserById(id);
+                userService.deleteUserById(id, authentication.getName());
                 return ResponseEntity.ok(ApiResponse.<Void>builder()
                                 .success(true)
                                 .message("Xóa user thành công")
